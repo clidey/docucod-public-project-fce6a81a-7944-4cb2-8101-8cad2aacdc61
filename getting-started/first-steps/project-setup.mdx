@@ -1,0 +1,187 @@
+---
+title: "Project Initialization"
+description: "Learn how to create a new Taskfile using scaffolding, templates, or by hand. This page sets the groundwork for managing repeatable workflows using simple, YAML-based configuration."
+---
+
+# Project Initialization
+
+Learn how to create a new Taskfile using scaffolding, templates, or by hand. This page guides you through setting up your first Taskfile, with YAML-based configuration, to manage your automated workflows effectively.
+
+---
+
+## 1. Understanding the Taskfile
+
+A Taskfile is the heart of Task automation. It defines your repeatable workflows through simple YAML syntax. It lists tasks, commands, variables, environment settings, and dependencies to run tasks efficiently.
+
+By creating a Taskfile, you enable Task to automate steps in your project, from building and testing to deployment.
+
+---
+
+## 2. Creating a New Taskfile
+
+You have three main options to get started with a Taskfile:
+
+### Option A: Scaffold Automatically (Recommended for Beginners)
+
+Use Task’s built-in scaffolding command to create a basic Taskfile tailored to your project needs.
+
+```shell
+task init
+```
+
+- This command generates a `Taskfile.yml` in your current directory.
+- The scaffolded Taskfile includes sample tasks to help you start immediately.
+
+> **Tip:** This method is ideal if you want a quick setup without writing YAML from scratch.
+
+### Option B: Use a Template
+
+You can start from a prebuilt template Taskfile available publicly or from your organization.
+
+Steps:
+
+1. Copy the template Taskfile (`Taskfile.yml` or `taskfile.yml`) into your project root.
+2. Adjust variables and commands to fit your environment.
+
+> **Example:** If your team maintains a shared `Taskfile-template.yml`, rename and customize it as your project’s `Taskfile.yml`.
+
+### Option C: Create Manually (For Advanced Users)
+
+If you prefer full control, create a `Taskfile.yml` by hand.
+
+Minimum Example:
+
+```yaml
+version: '3'
+tasks:
+  default:
+    cmds:
+      - echo "Hello, Task!"
+```
+
+This basic Taskfile defines a `default` task that prints a message.
+
+> **Best Practice:** Start simple and incrementally add tasks and features as your project automation grows.
+
+---
+
+## 3. Taskfile Placement and Naming
+
+- Place the Taskfile in your project root for best automatic discovery.
+- Supported filenames in prioritized order:
+  - `Taskfile.yml`
+  - `taskfile.yml`
+  - `Taskfile.yaml`
+  - `taskfile.yaml`
+  - `.dist` variants like `Taskfile.dist.yml` (for template/reference use)
+
+> **Note:** Task walks parent directories looking for a Taskfile if none is found in the current directory.
+
+---
+
+## 4. Editing Your Taskfile
+
+Once created, open the Taskfile YAML and customize:
+
+- **Tasks:** Define commands (`cmds`) that you want to automate.
+- **Variables:** Use `vars` for reusable values.
+- **Environment:** Set project-specific environment variables.
+- **Dependencies:** Use `deps` to run tasks in order.
+
+### Sample Taskfile snippet
+
+```yaml
+version: '3'
+
+vars:
+  PROJECT_NAME: MyApp
+
+tasks:
+  build:
+    desc: "Build the {{.PROJECT_NAME}} application"
+    cmds:
+      - go build -o ./bin/{{.PROJECT_NAME}} ./cmd/app
+
+  test:
+    desc: "Run tests"
+    deps: [build]
+    cmds:
+      - go test ./...
+
+  default:
+    desc: "Build and test the application"
+    deps: [build, test]
+```
+
+This example shows how you can group tasks, create dependencies, and reuse variables.
+
+---
+
+## 5. Verifying Your Taskfile
+
+To confirm your Taskfile is recognized and working, run:
+
+```shell
+task --list
+```
+
+You should see a list of available tasks including your newly created ones.
+
+Run the default task to test execution:
+
+```shell
+task
+```
+
+---
+
+## 6. Best Practices
+
+- **Keep it simple at first:** Define only essential tasks and expand as needed.
+- **Use descriptive task names and descriptions:** It helps you and your team understand the purpose.
+- **Check the YAML syntax carefully:** Misalignment or indentation can cause errors.
+- **Keep your Taskfile under version control:** This enables collaboration and history.
+- **Use `.dist` variants for shared base templates:** Let individual developers override personal configs.
+
+---
+
+## 7. Common Pitfalls & Troubleshooting
+
+<AccordionGroup title="Troubleshooting Project Initialization">
+<Accordion title="Taskfile Not Found">
+Ensure your Taskfile is named correctly and placed in the project root. If working in subfolders, Task will search parent dirs, but explicit `--taskfile` flag can specify exact path.
+</Accordion>
+<Accordion title="Syntax Errors in Taskfile">
+YAML syntax mistakes are common. Use an online YAML validator or a code editor with YAML linting before running Task.
+</Accordion>
+<Accordion title="Commands Not Running as Expected">
+Verify commands under `cmds` are shell-compatible and paths exist. Use `task --verbose` to see detailed execution output.
+</Accordion>
+<Accordion title="Conflicting Task Names">
+Avoid duplicate task names especially if including or flattening multiple Taskfiles. Task will throw errors on conflicts.
+</Accordion>
+</AccordionGroup>
+
+---
+
+## 8. Next Steps
+
+After creating your initial Taskfile:
+
+- Proceed to [Your First Task Run](/getting-started/first-steps/first-run) to learn how to execute tasks.
+- Review [Basic Configuration & Taskfile Structure](/getting-started/configuration-troubleshooting/configuration-basics) for in-depth Taskfile features.
+- Explore advanced [Including and Sharing Taskfiles](/guides/advanced-features-best-practices/including-sharing-taskfiles) to modularize your workflows.
+
+---
+
+## Additional Resources
+
+- [Taskfile Schema & Data Model](https://example.com/taskfile_concepts/core_architecture/taskfile_schema_concept)
+- [Core Concepts and Terminology](/overview/introduction-concepts/core-concepts)
+- [Installation Instructions](/getting-started/environment-setup/installation)
+
+---
+
+Welcome to your new era of automation with Task! With your foundational Taskfile in place, you're ready to unlock powerful, repeatable workflows with ease.
+
+---
