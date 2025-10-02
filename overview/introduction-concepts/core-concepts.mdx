@@ -1,0 +1,256 @@
+---
+title: "Core Concepts and Terminology"
+description: "Familiarize yourself with key concepts such as tasks, Taskfiles, variables, dependencies, and platforms. This page builds the vocabulary needed to navigate Task workflows confidently, explaining the fundamental ideas behind declarative automation and how users define, group, and compose repeatable processes."
+---
+
+# Core Concepts and Terminology
+
+## Introduction
+
+Welcome to the foundational guide on Task's core concepts and terminology. This page equips you with the essential vocabulary and ideas you need to confidently define, group, and automate your workflows using Task's declarative syntax. Understanding these concepts is crucial for navigating Taskfiles, writing effective tasks, and composing complex automation effortlessly.
+
+---
+
+## What Are Tasks and Taskfiles?
+
+### Tasks
+A *task* is the fundamental unit of work in Task. Think of a task as a repeatable process, like building your code, running tests, or deploying your app. It bundles one or multiple command-line instructions, optionally with dependencies, variables, environment settings, and execution rules.
+
+Each task is identified by a unique name and can perform actions ranging from simple shell commands to orchestrating sequences of other tasks.
+
+### Taskfiles
+A *Taskfile* is a YAML file that declares a set of tasks along with variables, environment settings, includes, and configurations. By default, Task searches for a Taskfile named like `Taskfile.yml` or similar variants in the current directory.
+
+The Taskfile acts like a manifest and script combined — defining your project's automation blueprint in one place.
+
+---
+
+## Key Terminology
+
+| Term           | Description                                                                                     |
+|----------------|-------------------------------------------------------------------------------------------------|
+| **Variables**  | Named values (strings, bools, arrays, maps) that can be interpolated for dynamic task behavior.  |
+| **Dependencies** | Tasks that must be completed before another task runs, allowing complex workflows.             |
+| **Commands (cmds)** | The actual shell or task calls that execute the work inside a task.                         |
+| **Platforms**  | Restrictions specifying which OS and architectures a task or command runs on, ensuring cross-platform compatibility. |
+| **Includes**   | Mechanism to import second Taskfiles, enabling task modularity and reuse across projects.       |
+| **Preconditions** | Checks that halt task execution if unmet, useful for environment or state validation.         |
+| **Fingerprinting** | Mechanism (sources/generates/status) to track task outputs and avoid unnecessary re-running.   |
+| **Aliases**    | Shorter or alternative names to invoke tasks, improving command-line ergonomics.                |
+| **Silent mode** | Option to suppress command echoing during execution, keeping the output cleaner.                 |
+
+---
+
+## Understanding Declarative Automation
+
+Task uses a declarative approach: you *declare what* you want done, not *how* to do it. You describe your workflow with tasks, dependencies, variables, and other configurations. Then Task takes care of orchestrating the execution in the most efficient manner.
+
+This means:
+- You focus on the process structure instead of scripting execution order explicitly.
+- Task runs dependencies in parallel by default to save time, unless you specify serial invocation.
+- Task automatically handles platform-specific tasks and skipping irrelevant commands.
+
+---
+
+## Deep Dive into Core Concepts
+
+### 1. Variables
+Variables allow parametrization and dynamic behavior in your tasks. They can be:
+- **Static values** like strings or numbers.
+- **Dynamic variables** whose values come from running shell commands.
+- **References** to other variables enabling complex data flows.
+- **Maps and arrays** for structured data.
+
+Example:
+
+```yaml
+vars:
+  GREETING: 'Hello, Task!'
+
+tasks:
+  greet:
+    cmds:
+      - echo "{{.GREETING}}"
+```
+
+### 2. Dependencies (deps)
+Define tasks that must run before a given task. Dependencies run in parallel for speed, but you can control serial execution by invoking tasks inside a `cmds` array.
+
+Example:
+
+```yaml
+tasks:
+  build-assets:
+    cmds:
+      - echo 'Building assets'
+
+  build:
+    deps: [build-assets]
+    cmds:
+      - echo 'Building app'
+```
+
+Here, `build-assets` runs before `build`.
+
+### 3. Commands (cmds)
+Commands are shell commands or calls to other tasks executed when a task runs. They support looping (`for`), silent mode, platform restrictions, and deferred execution.
+
+Example:
+
+```yaml
+tasks:
+  print-messages:
+    cmds:
+      - for: ["foo", "bar"]
+        cmd: echo "Message: {{.ITEM}}"
+```
+
+This loops over the list and prints each message.
+
+### 4. Platforms
+Restrict where tasks or commands run based on operating system or CPU architecture. This lets you customize your automation for macOS, Windows, Linux, ARM64, x86, etc.
+
+Example:
+
+```yaml
+tasks:
+  build-windows:
+    platforms: [windows]
+    cmds:
+      - echo 'Windows build'
+```
+
+### 5. Includes
+Includes pull in other Taskfiles as namespaces, enabling you to modularize your automation and share tasks between projects. Included tasks are called with a namespace prefix.
+
+Example:
+
+```yaml
+includes:
+  docs: ./documentation
+
+tasks:
+  default:
+    deps: [docs:serve]
+```
+
+### 6. Preconditions and Requires
+Preconditions allow tasks to verify environmental or prerequisite conditions before running. `requires` is used to ensure variables are set, with options for allowed values (enums).
+
+```yaml
+tasks:
+  deploy:
+    preconditions:
+      - sh: test -f .env
+        msg: 'Missing .env file. Aborting.'
+    requires:
+      vars: [API_KEY, ENVIRONMENT]
+    cmds:
+      - ./deploy.sh
+```
+
+### 7. Fingerprinting Sources and Generates
+To avoid redundant builds, you can mark source files and generated files in a task. Task compares checksums or timestamps to decide whether re-running is necessary.
+
+```yaml
+tasks:
+  css:
+    sources: ['src/**/*.css']
+    generates: ['dist/style.css']
+    cmds:
+      - build-css
+```
+
+### 8. Silent Mode
+Suppress command echoing for cleaner output. Activate at the command, task, or global level.
+
+```yaml
+tasks:
+  quiet:
+    cmds:
+      - echo 'Hello World'
+    silent: true
+```
+
+---
+
+## Putting It All Together: A Sample Taskfile Snippet
+
+```yaml
+version: '3'
+
+vars:
+  ENV: 'production'
+
+tasks:
+  setup:
+    cmds:
+      - echo 'Setting up environment...'
+
+  build:
+    deps: [setup]
+    cmds:
+      - echo 'Building project in {{.ENV}}'
+
+  deploy:
+    preconditions:
+      - sh: test {{.ENV}} = 'production'
+        msg: 'Can only deploy in production environment'
+    requires:
+      vars: [DEPLOY_TOKEN]
+    cmds:
+      - ./deploy.sh --env {{.ENV}} --token {{.DEPLOY_TOKEN}}
+```
+
+This example combines variables, dependencies, preconditions, and requires keys to control workflow execution safely and dynamically.
+
+---
+
+## Tips for Success
+
+- **Name your tasks descriptively** to make automation intuitive.
+- **Use variables liberally** to avoid duplication and increase flexibility.
+- **Leverage includes** for modular and maintainable Taskfiles.
+- **Validate preconditions early** to prevent wasted work.
+- **Fingerprint generated outputs** to speed up repeated runs.
+- **Test frequently**—Use dry-run with `--dry` flag to preview what Task will do.
+
+---
+
+## Common Pitfalls
+
+- Forgetting to define required variables, causing silent failures.
+- Defining circular dependencies, which Task detects and alerts you about.
+- Using platform restrictions without testing on other OS/architectures.
+- Ignoring outputs of fingerprinting, which can lead to unnecessary rebuilds.
+- Misusing silent mode and losing critical debug information.
+
+---
+
+## Related Concepts and Next Steps
+
+After grasping these core concepts, explore the following documentation to put them into practice:
+
+- [What is Task? (Product Overview)](/overview/introduction-concepts/product-overview) — Understand Task's purpose and broader context.
+- [Who is Task For? (Audience & Use Cases)](/overview/introduction-concepts/target-audience-usecases) — Align concepts with your workflow needs.
+- [Writing and Running Tasks](/guides/getting-started-workflows/writing-running-tasks) — Learn how to author and execute tasks.
+- [System Architecture](/overview/architecture-features/system-architecture) — See how Task executes your workflows behind the scenes.
+
+
+---
+
+## Summary
+By mastering the vocabulary and core ideas on this page, you will unlock Task’s power to orchestrate automated workflows concisely and efficiently. Use this knowledge to write readable, reusable, and maintainable Taskfiles that simplify your development lifecycle.
+
+---
+
+## Further Reading
+- [Taskfile Schema Reference](/website/src/docs/reference/schema.md) — Deep dive into every Taskfile configuration option.
+- [Including Other Taskfiles](/guides/advanced-features-best-practices/including-sharing-taskfiles) — Expand your automation modularity.
+- [Variables and Templating Engine](/taskfile_concepts/advanced_features/variable_system) — Advanced variable usage.
+- [Conditional Execution & Preconditions](/guides/advanced-features-best-practices/conditional-execution-preconditions) — Fine-tune task activation logic.
+
+
+---
+
+Welcome aboard your journey to mastering Task automation — knowing the core concepts and terminology is your first critical step towards blazing fast, reliable task-running workflows.
