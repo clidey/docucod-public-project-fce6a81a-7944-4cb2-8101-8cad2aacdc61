@@ -1,0 +1,210 @@
+---
+title: "Installation & Setup Issues"
+description: "Provides solutions to common installation and environment setup problems, including platform-specific concerns, permission errors, and locating the Task binary after installation."
+---
+
+# Installation & Setup Issues FAQ
+
+This FAQ provides targeted solutions to common problems encountered during the installation and environment setup of Task. Whether you face platform-specific hurdles, permission errors, or difficulty locating the Task binary after installation, this guide offers clear, practical steps to get you running smoothly.
+
+---
+
+## 1. Common Installation Questions
+
+### 1.1 How do I install Task on my platform?
+Task supports a range of platforms including Windows, macOS (darwin), and Linux architectures. Installation typically involves downloading the precompiled Task binary corresponding to your OS and architecture.
+
+To install Task using the official installation script:
+
+```sh
+sh -c "$(curl -fsSL https://taskfile.dev/install.sh)"
+```
+
+You can specify the installation directory (default is `./bin`) with the `-b` flag:
+
+```sh
+sh -c "$(curl -fsSL https://taskfile.dev/install.sh)" -b /usr/local/bin
+```
+
+The script automatically detects your OS and architecture to download the appropriate binary.
+
+### 1.2 How do I verify the installation succeeded?
+Run:
+
+```sh
+task --version
+```
+
+If Task is correctly installed and in your PATH, this command will display the installed Task version.
+
+### 1.3 What if my platform is not supported?
+The installation script supports major platforms and architectures explicitly listed (e.g., linux/amd64, windows/386, darwin/arm64). If your platform is not supported, the installer will abort with an error.
+
+<Tip>
+Make sure your system’s OS and CPU architecture are among the supported values. If your platform is missing, open an issue at https://github.com/go-task/task/issues/new to request support.
+</Tip>
+
+---
+
+## 2. Permission and Environment Setup Issues
+
+### 2.1 I get a permission denied error during installation. How do I fix it?
+If you install to a system directory like `/usr/local/bin`, ensure you have the necessary permissions:
+
+- Use `sudo` to run the install script when writing to protected directories.
+- Alternatively, install to a user directory like `~/bin` and add it to your PATH.
+
+Example:
+
+```sh
+sh -c "$(curl -fsSL https://taskfile.dev/install.sh)" -b ~/bin
+export PATH="$HOME/bin:$PATH"
+```
+
+### 2.2 Task binary installed but cannot be found on command line
+
+This usually means the directory where Task got installed is not in your system’s `PATH` environment variable.
+
+- Verify installation directory (default is `./bin` relative to where you ran the script).
+- Add this directory to your PATH in your shell configuration, for example in `.bashrc` or `.zshrc`:
+
+```sh
+export PATH="$HOME/bin:$PATH"
+```
+
+- Reload your shell or restart terminal.
+
+### 2.3 Debugging installation issues
+
+The installation script includes a `-d` flag to enable debug logging, which can help uncover where failures occur:
+
+```sh
+sh -c "$(curl -fsSL https://taskfile.dev/install.sh)" -d
+```
+
+This prints detailed info about each step such as download URLs, checksum verifications, and installation paths.
+
+---
+
+## 3. Download and Verification Problems
+
+### 3.1 The installer reports checksum verification failed
+
+The install script verifies the SHA256 checksum of the downloaded binary to ensure integrity. If verification fails:
+
+- Make sure your network connection is stable and download is not corrupted.
+- Retry the installation.
+- Confirm that the script is up-to-date (re-download the latest install script).
+- Check for any proxy or firewall that might alter the downloaded files.
+
+### 3.2 Download errors or unable to connect to GitHub releases
+
+The installer uses `curl` or `wget` to fetch assets. If you see network or HTTP errors:
+
+- Verify your internet connectivity.
+- Make sure your environment supports `curl` or `wget` commands.
+- If corporate proxies are involved, configure them for your shell environment.
+
+---
+
+## 4. Platform-Specific Issues
+
+### 4.1 Windows installation tips
+
+- The binary installed will be `task.exe`.
+- Ensure PowerShell or CMD shell's execution policies allow running the binary.
+- Add the installation directory (e.g., `C:\tools`) to the system PATH.
+- Use Git Bash or Windows Terminal for better shell compatibility with Task.
+
+### 4.2 macOS and Linux permissions
+
+- Verify execution permissions on the Task binary:
+
+```sh
+chmod +x /path/to/task
+```
+
+- Confirm your macOS security settings or Linux AppArmor/SELinux policies are not blocking execution.
+
+---
+
+## 5. After Installation: Locating the Task Binary
+
+### 5.1 Where is Task installed by default?
+- The default installation directory is `./bin` relative to the directory where you run the install script.
+- You can override this with the `-b` flag.
+
+### 5.2 How do I add Task to my PATH?
+Add this line to your shell configuration file (`~/.bashrc`, `~/.zshrc`, etc.):
+
+```sh
+export PATH="$HOME/bin:$PATH"
+```
+
+Then reload shell with `source ~/.bashrc` or restart terminal.
+
+### 5.3 How to confirm which Task binary is running
+
+Run:
+
+```sh
+which task
+# or
+command -v task
+```
+
+This shows the full path of the executable in use.
+
+---
+
+## 6. Troubleshooting Common Installation Errors
+
+<AccordionGroup title="Troubleshooting Steps">
+<Accordion title="I ran the installer but 'task' command not found">
+- Confirm install directory.
+- Add directory to PATH.
+- Open a new shell session.
+- Verify installation success logs in the install output.
+</Accordion>
+<Accordion title="Checksum verification error during install">
+- Retry installation to rule out partial downloads.
+- Check for local time skew affecting SSL and downloads.
+- Verify you are using the latest install script.
+</Accordion>
+<Accordion title="Permission denied while copying binary">
+- Use sudo or run installer as admin.
+- Choose a directory where your user has write permission.
+</Accordion>
+<Accordion title="Unsupported platform error">
+- Check your OS and architecture using `uname -s` and `uname -m`.
+- File an issue if your platform is missing.
+</Accordion>
+</AccordionGroup>
+
+---
+
+## 7. Additional Resources
+
+- [Installation (All Platforms) Guide](/getting-started/environment-setup/installation): Detailed installation instructions per platform.
+- [Prerequisites & System Requirements](/getting-started/environment-setup/prerequisites): Verify platform and environment compatibility.
+- [Using Task and Running Tasks](/guides/getting-started-workflows/writing-running-tasks): Next steps after installation.
+- [Troubleshooting & Validation](/getting-started/configuration-troubleshooting/troubleshooting-common): Fix post-install configuration issues.
+- [GitHub Releases](https://github.com/go-task/task/releases): Access latest Task releases and manual downloads.
+
+---
+
+<Tip>
+Always use the official installation script or binaries from the [Task GitHub releases page](https://github.com/go-task/task/releases) to ensure security and reliability.
+</Tip>
+
+<Check>
+Regularly update Task to use the latest features and resolve installation bugs.
+</Check>
+
+---
+
+By following the guidance in this FAQ, you can swiftly overcome common installation and setup obstacles to start automating your workflows confidently with Task.
+
+---
+
+_Last updated based on Task version and install script from the [official repository](https://github.com/go-task/task) on branch 'main'._
