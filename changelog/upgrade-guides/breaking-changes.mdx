@@ -1,0 +1,187 @@
+---
+title: "Breaking Changes & Migration Notes"
+description: "Details on any backward-incompatible changes included in recent versions, with explicit calls to action for required upgrades to Taskfiles, workflows, or integrations. Complete with before/after usage examples for common scenarios."
+---
+
+# Breaking Changes & Migration Notes
+
+Understanding and adapting to backward-incompatible changes is critical to maintaining smooth automation workflows with Task. This documentation page is dedicated to outlining all recent breaking changes introduced in Task releases, guiding you through what has changed, how it impacts your Taskfiles and workflows, and providing concrete migration instructions with before-and-after usage examples.
+
+---
+
+## 1. Breaking Change Policy Overview
+
+Task ensures transparency and user control when introducing backward-incompatible changes. These changes are communicated clearly through this documentation, release notes, and community channels. The approach balances innovation with stability by:
+
+- Introducing breaking changes as opt-in experimental features in minor versions before full adoption.
+- Maintaining detailed migration guides for every breaking change.
+- Providing deprecation timelines before removing support for older behaviors.
+
+This allows users to prepare their Taskfiles proactively without disruption.
+
+---
+
+## 2. Recent Breaking Changes Summary
+
+### Experimental Feature Flags for Breaking Changes
+
+Starting with Task v3.x minor releases, breaking changes may appear as experimental features requiring explicit opt-in. This enables you to preview and test upcoming behavior changes without impacting current workflows.
+
+### Deprecation of Taskfile Version 2 Support
+
+- **Impact**: Taskfile schemas with `version: "2"` are now officially deprecated and will cease to execute in future releases.
+- **Action**: Upgrade your Taskfiles to version 3 format as soon as possible to avoid interruption.
+
+### v4 Major Migration
+
+- **Compatibility**: Task v4 will not support backward compatibility with v3 Taskfiles.
+- **Impact**: Taskfiles written for v3 will require adjustments to run on v4.
+- **Guidance**: Prior to upgrading, carefully review migration instructions specific to v4 when released.
+
+---
+
+## 3. Migration Instructions & Examples
+
+Below are common scenarios you need to address when migrating Taskfiles across breaking changes.
+
+### 3.1 Migrating Taskfile Version 2 to Version 3
+
+Before (v2 Taskfile snippet):
+```yaml
+version: "2"
+tasks:
+  build:
+    cmds:
+      - go build ./...
+```
+
+After (v3 Taskfile snippet):
+```yaml
+version: '3'
+tasks:
+  build:
+    cmds:
+      - go build ./...
+```
+
+> **Note:** Version 3 Taskfiles introduce enhanced features and syntax. Consult the [Taskfile Schema & Data Model documentation](/taskfile_concepts/core_architecture/taskfile_schema_concept) for comprehensive structure changes.
+
+### 3.2 Handling Experimental Feature Flags
+
+If a breaking change is introduced with an experimental flag, enable it explicitly:
+
+```yaml
+version: '3'
+experimental:
+  feature-name: true
+
+tasks:
+  default:
+    cmds:
+      - echo "Running with experimental feature"
+```
+
+Replace `feature-name` with the actual flag provided in the release notes.
+
+### 3.3 Dealing with Deprecated Fields or Syntax
+
+Some fields or task directives may be removed or renamed:
+
+Before:
+```yaml
+tasks:
+  test:
+    deps:
+      - task: lint
+```
+After:
+```yaml
+tasks:
+  test:
+    deps:
+      - lint
+```
+
+> **Tip:** The `task:` prefix in dependencies may be removed in newer versions. Always verify deprecations in the release notes.
+
+---
+
+## 4. Common Pitfalls and Troubleshooting
+
+### Cyclic Dependencies
+
+In recent Task versions, cyclic dependencies between tasks are detected and flagged as errors. When migrating,
+check for cycles:
+
+```yaml
+tasks:
+  task-1:
+    deps:
+      - task-2
+  task-2:
+    deps:
+      - task-1
+```
+
+This configuration causes an error. Break cycles by rethinking task dependencies.
+
+### Task Includes and Namespaces
+
+Changes around includes and namespaces may affect overlays and task invocations across modular Taskfiles.
+
+- Verify that includes specify relative paths and namespaces correctly.
+- Consult the [Including and Sharing Taskfiles Guide](/guides/advanced-features-best-practices/including-sharing-taskfiles) to adjust your modular setup.
+
+### Deprecated Remote Includes without Checksums
+
+Earlier remote includes without checksum validation are now considered insecure and deprecated. Always specify checksums for remote Taskfiles:
+
+```yaml
+includes:
+  included:
+    taskfile: https://taskfile.dev
+    checksum: c153e97e0b3a998a7ed2e61064c6ddaddd0de0c525feefd6bba8569827d8efe9
+```
+
+Failing to add checksums may lead to loading failures.
+
+---
+
+## 5. Deprecation Timeline & Compatibility Matrix
+
+| Feature / Version          | Deprecated From | Removal Expected | Notes                                |
+|---------------------------|-----------------|------------------|-------------------------------------|
+| Taskfile schema version 2 | v3.x            | v4               | Upgrade Taskfiles to version 3 ASAP |
+| Remote includes no checksum| v3.x            | v4               | Add checksum to remote includes     |
+| Experimental flags usage   | v3.x            | TBD              | Monitor deprecation announcements   |
+
+For detailed compatibility between Task versions, visit the [Version Timeline](/changelog/release-history/version-timeline).
+
+---
+
+## 6. Additional Resources
+
+- [Upgrade Guides](/changelog/upgrade-guides/upgrade-instructions): Step-by-step instructions for major breaking changes.
+- [Deprecations & Removal Notices](/changelog/detail-changes/deprecations): Comprehensive list of deprecated features.
+- [Experiments & Feature Flags](/changelog/detail-changes/features-improvements#experimental-features): To track opt-in features that might affect your workflow.
+- [Taskfile Schema & Data Model](/taskfile_concepts/core_architecture/taskfile_schema_concept): For the latest in Taskfile structure.
+
+
+---
+
+## 7. Summary
+
+Breaking changes in Task are a natural evolution to improve the automation experience, maintainability, and security – but they can disrupt existing workflows if not managed carefully. This page equips you with detailed explanations, migration instructions, troubleshooting tips, and timelines to adapt your Taskfiles confidently.
+
+Stay informed by following release notes and official guides, and reach out to the community via GitHub issues or discussions if you encounter challenges.
+
+
+---
+
+<Tip>
+Always back up your Taskfiles and test migration steps in isolated branches or environments before deploying to production.
+</Tip>
+
+<Warning>
+Do not skip upgrading deprecated Taskfiles or ignoring experimental opt-ins, as this can lead to unexpected failures or security risks.
+</Warning>
