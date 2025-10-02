@@ -1,0 +1,152 @@
+---
+title: "Prerequisites & System Requirements"
+description: "Understand what you need to run Task successfully, including supported operating systems, required permissions, and dependencies. This page arms you with a checklist to ensure your environment is ready for installation."
+---
+
+# Prerequisites & System Requirements
+
+Ensure your environment is ready to install and run Task effectively. This guide provides a comprehensive checklist of supported platforms, necessary permissions, and dependencies to avoid common pitfalls and set you up for a smooth automation experience.
+
+---
+
+## 1. Supported Operating Systems
+
+Task is designed for broad cross-platform compatibility, supporting the following operating systems explicitly:
+
+- **Linux** (major distributions)
+- **macOS**
+- **Windows**
+
+> Task uses system calls and shell execution compatible with these OS families ensuring seamless task runs across environments.
+
+### Platform-Specific Notes
+
+- On **Windows**, PowerShell or Cmd.exe is used as the shell for commands if not explicitly overridden.
+- On **Linux** and **macOS**, `/bin/sh` or the default POSIX-compliant shell is used.
+
+
+## 2. System Requirements
+
+Before installing or running Task, verify your system meets these minimum specifications:
+
+- **Processor:** Any recent x86-64 or ARM architecture compatible with your OS
+- **Memory:** Minimum 512 MB RAM (more recommended for complex builds)
+- **Disk Space:** At least 100 MB free, allowing room for temporary files and caches (`.task` directory)
+- **Shell:** A POSIX-compliant shell environment such as `bash`, `sh`, or on Windows, PowerShell/CMD
+
+
+## 3. Permissions & User Access
+
+- You need permission to execute files and commands in the shell environment.
+- File system write permission is required in your project directory to store ephemeral state files in `.task/`.
+- If including task files or running tasks that interact with system resources, elevated permissions may be required (e.g., `sudo` on Linux/macOS).
+
+
+## 4. Dependencies
+
+Task itself is a self-contained binary and does not depend on external runtimes like JVM or Node.js.
+
+However, your tasks (commands inside Taskfiles) may depend on external tools. To successfully run a typical Task installation, make sure:
+
+- Essential system tools used in your task commands are installed (e.g., `git`, `docker`, `make`, compilers).
+- The shell environment supports the commands being called.
+
+> Task will run any command in your Taskfile exactly as if typed directly into the terminal.
+
+
+## 5. Environment Variables and Configuration
+
+- Ensure your shell environment can export and use environment variables, as many Taskfile variables depend on this.
+- For `.env` file support, having a standard shell environment to parse and load environment variables is necessary.
+
+
+## 6. Network and Connectivity
+
+- Network connectivity is not required for Task itself but might be required if your tasks involve remote operations (e.g., package installs, remote builds).
+- Make sure any firewall or proxy allows the necessary outbound connections.
+
+
+## 7. Verification Before Installation
+
+Run the following checks to verify your environment:
+
+```shell
+# Check OS and shell
+uname -s
+# Expected outputs: Linux, Darwin (macOS), or details on Windows
+
+# Check shell available
+sh --version || bash --version
+
+# Ensure access to write in current directory
+touch testfile && rm testfile
+
+# Confirm presence of basic tools
+command -v git || echo "Warning: git not found"
+command -v docker || echo "Warning: docker not found"
+```
+
+
+---
+
+## Troubleshooting Common Prerequisite Issues
+
+### Task Fails to Run
+- **Symptom:** "command not found" or binary not executable
+- **Solution:** Check binary permissions (`chmod +x ./task`) and ensure your PATH includes the binary location.
+
+### Shell Incompatibility
+- **Symptom:** Tasks fail due to unsupported shell commands
+- **Solution:** Verify you are running under a supported shell (bash, sh, PowerShell) and adapt your Taskfile commands accordingly.
+
+### Missing Required Tools
+- **Symptom:** Individual commands fail (e.g., `docker`, `git` unavailable)
+- **Solution:** Install the required external tools as prerequisites for your tasks.
+
+### Permission Denied Writing Files
+- **Symptom:** Cannot create or write to `.task` directory or temporary files
+- **Solution:** Verify write permissions on your project directory.
+
+
+---
+
+## Best Practices and Tips
+
+- Always start from the latest supported version of your OS.
+- Confirm the availability of all shell commands your tasks rely on.
+- Keep `.task/` directory in your `.gitignore` to prevent ephemeral state from polluting version control.
+- Use environment variables or task-level variables to tailor configurations across environments.
+- Leverage platform restrictions (`platforms` keyword) in Taskfile to enable conditional task runs.
+
+
+## Next Steps
+
+Once your environment meets these prerequisites:
+
+1. Proceed to the [Installation (All Platforms)](/getting-started/environment-setup/installation) guide to acquire and set up Task.
+2. Explore [Project Initialization](/getting-started/first-steps/project-setup) to create your first Taskfile.
+3. Continue to [Your First Task Run](/getting-started/first-steps/first-run) to run a sample task and verify setup.
+
+
+---
+
+For detailed information on platform constraints, variable usage, and system architecture, refer to the [System Architecture](/overview/architecture-features/system-architecture) and [Quick Feature Overview](/overview/architecture-features/feature-overview).
+
+If you encounter specific installation issues or errors, consult the [Troubleshooting & Validation](/getting-started/configuration-troubleshooting/troubleshooting-common) guide.
+
+
+---
+
+<Info>
+Need a quick review? See the full list of supported OS and basic system expectations before installing Task.
+</Info>
+
+<Check>
+- Supported OS: Linux, macOS, Windows
+- POSIX shell or Windows shell available
+- Write permissions in project directory
+- External commands/tools installed for your tasks
+</Check>
+
+
+---
