@@ -1,0 +1,152 @@
+---
+title: "Upgrade Guides"
+description: "Practical advice and stepwise instructions to update your Task installation and adapt your Taskfiles or automation pipelines. This includes guidance for smooth transitions, highlighting deprecations and new recommended practices."
+---
+
+# Upgrade Guides
+
+Practical advice and stepwise instructions to update your Task installation and adapt your Taskfiles or automation pipelines. This guide helps ensure a smooth transition when upgrading Task across versions, highlighting deprecations, migration paths, and new recommended practices.
+
+---
+
+## 1. Preparing for an Upgrade
+
+Upgrading Task is straightforward but requires understanding of versioning changes, deprecated features, and compatibility considerations to avoid disruptions in automation.
+
+- **Always review the changelog and breaking changes documentation before upgrading.**
+- **Back up your current Taskfiles and automation environment.**
+- **Test upgrades in a controlled environment before applying to production pipelines.**
+
+This preparation minimizes surprises and ensures your workflows continue running flawlessly.
+
+---
+
+## 2. Understanding Versioning and Compatibility
+
+Task uses semantic versioning (semver) with versions structured as `MAJOR.MINOR.PATCH`. Understanding what each increment means helps you assess upgrade impact:
+
+- **Major versions** (e.g., v2.x to v3.x): May introduce breaking changes requiring Taskfile or usage migration.
+- **Minor versions** (e.g., v3.44 to v3.45): Add features and improvements while maintaining backward compatibility.
+- **Patch versions** (e.g., v3.45.3 to v3.45.4): Contain bug fixes and minor updates without breaking changes.
+
+Refer to the [Version Timeline](https://taskfile.dev/docs/changelog/release-history/version-timeline) for historical releases and mappings.
+
+---
+
+## 3. Migrating Taskfiles and Adoption Steps
+
+### 3.1 Identify Breaking Changes
+
+Check the [Breaking Changes & Migration Notes](https://taskfile.dev/docs/changelog/upgrade-guides/breaking-changes) to identify features removed or changed since your current version. Examples include:
+
+- Deprecated schema versions (e.g., removal of `version: 2` schema in v3.34.0)
+- Changes to variable syntax, platform support, or task includes
+- Renamed or removed CLI flags
+
+### 3.2 Update Taskfile Syntax and Features
+
+- Adapt your Taskfiles to the latest supported schema version.
+- Replace deprecated syntax or keywords according to migration notes.
+- Adjust any includes, namespaces, or variables that are affected.
+
+### 3.3 Leverage New Features
+
+Adopt new capabilities to improve automation efficiency and maintainability:
+
+- Use enhanced wildcard and matrix looping features.
+- Update to latest variable and templating engine improvements.
+- Utilize new output modes and concurrency controls where appropriate.
+
+### 3.4 Test Thoroughly
+
+- Run your Taskfiles with `--dry` or `--list` to verify task definitions.
+- Validate output correctness and dependency execution order.
+- Check task logs and outputs for warnings or errors.
+
+---
+
+## 4. Installation and Upgrade Methods
+
+### 4.1 Updating Your Task Installation
+
+Depending on your platform, choose an appropriate upgrade method:
+
+- **Homebrew (macOS/Linux):** `brew upgrade go-task`
+- **Snap (Linux):** Update via Snapcraft dashboard as described in [Releasing](https://taskfile.dev/docs/cmd/releasing)
+- **npm:** Update using `npm install -g @go-task/cli` or `pnpm`
+- **Winget (Windows):** Manually update manifest and push pull requests as per [Winget instructions](https://taskfile.dev/docs/cmd/releasing)
+- **Manual build:** Rebuild from source using Go (`go install ./cmd/task@latest`)
+
+### 4.2 Version Pinning & Local Testing
+
+- Use version-specific tags or commit hashes for reproducing older or specific builds.
+- Employ nightly or beta releases for early testing of upcoming features or fixes.
+
+---
+
+## 5. Adapting Automation Pipelines
+
+### 5.1 Update CI/CD Configurations
+
+- Update pipeline references to use the new Task binary.
+- Adjust commands invoking Task to use any new CLI flags or environment variables.
+
+### 5.2 Environment Variables & .taskrc Usage
+
+- Transition to the new global config via `.taskrc.yml` as introduced in recent versions.
+- Review environment variable precedence especially for `TASK_OFFLINE` and caching behaviors.
+
+### 5.3 Modular and Remote Taskfiles Considerations
+
+- Check checksum pinning for included remote Taskfiles.
+- Review inclusion flattening and namespaces for compatibility.
+
+---
+
+## 6. Deprecations and Removed Features
+
+Stay informed about removed features that might impact your setup:
+
+- Deprecated schema versions and unsupported loaders
+- Removal of deprecated completion scripts in favor of new `--completion` flag
+- Changes in variable scoping and special variable behaviors
+- Adjusted behaviors for fingerprinting and status commands
+
+Refer to [Deprecations](https://taskfile.dev/docs/changelog/detail-changes/deprecations) for details.
+
+---
+
+## 7. Troubleshooting Upgrade Issues
+
+Common pain points and solutions:
+
+- **Unexpected task failures:** Check for missing or altered variable references; run with `--verbose` for insights.
+- **Incorrect platform detection:** Confirm `platforms:` settings and Task version compatibility.
+- **Broken includes or missing dependencies:** Verify checksum pins and refresh remote caches if applicable.
+- **Performance regressions:** Use new CLI flags like `--no-status` to optimize scanning overhead.
+
+Refer to [Troubleshooting & Validation](https://taskfile.dev/docs/getting-started/configuration-troubleshooting/troubleshooting-common) for general guidance.
+
+---
+
+## 8. Best Practices for Smooth Upgrades
+
+- Keep Task installation and Taskfiles in version control.
+- Use automated CI tests to verify Taskfile functionality after upgrades.
+- Follow semantic version constraints in automation tooling.
+- Monitor Task's changelog and blog for release announcements.
+- Experiment with new features in non-critical branches before rolling out globally.
+
+---
+
+## 9. Additional Resources
+
+- [Changelog & Release History](https://taskfile.dev/docs/changelog/release-history/version-timeline)
+- [Breaking Changes Documentation](https://taskfile.dev/docs/changelog/upgrade-guides/breaking-changes)
+- [Releasing Guide](https://taskfile.dev/docs/cmd/releasing)
+- [Basic Configuration & Taskfile Structure](https://taskfile.dev/docs/getting-started/configuration-troubleshooting/configuration-basics)
+- [Common Automation Workflows](https://taskfile.dev/docs/guides/getting-started-workflows/common-workflows)
+
+---
+
+Upgrade confidently to the latest Task version to harness improved automation capabilities, enhanced cross-platform compatibility, and robust reliability tailored for modern software development and CI/CD ecosystems.
