@@ -1,0 +1,364 @@
+---
+title: "Basic Configuration & Taskfile Structure"
+description: "Get familiar with the general structure of a Taskfile, key configuration options, and how to define variables, environments, and dependencies. This serves as an entry point for tailoring Task to project needs."
+---
+
+# Basic Configuration & Taskfile Structure
+
+Get familiar with the general structure of a Taskfile, key configuration options, and how to define variables, environment settings, dependencies, and tasks. This guide serves as your entry point to tailoring Task automation to your project needs.
+
+---
+
+## 1. Understanding the Taskfile Structure
+
+A Taskfile is the heart of your automation setup in Task. It defines tasks, variables, environments, dependencies, and the overall configuration that tells Task what commands to run and when.
+
+### Key Sections of a Taskfile:
+
+- `version`: The Taskfile schema version, usually set to `'3'`.
+- `vars`: Global variables available throughout the Taskfile.
+- `env`: Environment variables that apply globally or to specific tasks.
+- `dotenv`: List of `.env` files to load for environment variables.
+- `includes`: Import other Taskfiles to modularize and reuse tasks.
+- `tasks`: The core commands and logic automation units.
+- `silent`, `output`, `run`, and other root-level options that modify behavior.
+
+
+### Minimal Taskfile Example
+```yaml
+version: '3'
+
+vars:
+  GREETING: 'Hello, World!'
+
+tasks:
+  greet:
+    cmds:
+      - echo '{{.GREETING}}'
+```
+
+This structure defines a global variable `GREETING` and a task `greet` that prints it.
+
+---
+
+## 2. Declaring Variables and Environments
+
+Variables and environment variables provide flexibility and dynamic configuration.
+
+### Variables (`vars`)
+- Can be strings, booleans, numbers, arrays, or maps.
+- Can be global (root-level `vars`) or local (per task).
+- Support dynamic values by running shell commands (`sh` dynamic variables).
+- Can reference other variables using templating or references.
+
+### Examples:
+
+#### Global Vars
+```yaml
+vars:
+  VERSION: '1.0.0'
+  FEATURES:
+    - fast
+    - safe
+```
+
+#### Task-local Vars
+```yaml
+tasks:
+  build:
+    vars:
+      PLATFORM: linux
+    cmds:
+      - echo "Building for {{.PLATFORM}} version {{.VERSION}}"
+```
+
+#### Dynamic Variable (shell command output)
+```yaml
+vars:
+  GIT_COMMIT:
+    sh: git rev-parse --short HEAD
+```
+
+#### Variable referencing another
+```yaml
+vars:
+  BASE_URL: 'https://example.com'
+
+  API_ENDPOINT:
+    ref: 'joinPath .BASE_URL "/api/v1"'
+```
+
+### Environment Variables (`env`)
+- Define environment variables accessible during task execution.
+- Can be set globally or per task.
+- Support dynamic values like `vars`.
+
+#### Example:
+```yaml
+env:
+  PATH: "/usr/local/bin:{{env PATH}}"
+  DEBUG: true
+
+tasks:
+  test:
+    env:
+      TEST_ENV: 'unit'
+    cmds:
+      - echo "Running tests with $TEST_ENV"
+```
+
+---
+
+## 3. Task Definitions
+
+Tasks encapsulate commands you want to run and related metadata about when and how to run them.
+
+### Basic Task Fields
+
+- `desc`: Optional description of the task.
+- `cmds`: Array or shorthand to define shell commands or sub-tasks.
+- `deps`: List of dependencies (other tasks) that should run first.
+- `vars`: Task-local variables.
+- `env`: Environment variables for the task.
+- `dir`: Directory where commands run.
+- `platforms`: Restrict task execution by OS and architecture.
+- `silent`: Suppress command echoing.
+- `prompt`: Display confirmation prompt before running.
+
+### Running Other Tasks
+Use the `task:` keyword inside `cmds` to run tasks sequentially.
+
+```yaml
+tasks:
+  build:
+    cmds:
+      - task: clean
+      - go build -o app
+
+  clean:
+    cmds:
+      - rm -rf build/
+```
+
+### Dependencies
+Use `deps` to run multiple tasks in parallel before this task.
+
+```yaml
+tasks:
+  deploy:
+    deps: [build, test]
+    cmds:
+      - ./deploy.sh
+```
+
+---
+
+## 4. Including Other Taskfiles
+
+To reuse or modularize tasks, use the `includes` section.
+
+### Syntax:
+```yaml
+includes:
+  common:
+    taskfile: ./common/Taskfile.yml
+    vars:
+      ENV: production
+    aliases: [cmn]
+    flatten: false
+    optional: false
+    internal: false
+```
+
+### Behavior:
+- Included tasks are namespaced: run with `task common:taskname` or with aliases `task cmn:taskname`.
+- You can flatten includes to avoid namespacing.
+- `vars` can customize included Taskfiles per instance.
+- Mark `optional: true` to ignore missing Taskfile errors.
+- `internal: true` marks included tasks as internal (hidden from task lists).
+
+### Example:
+```yaml
+includes:
+  db:
+    taskfile: ./tasks/database.yml
+    vars:
+      DB_HOST: localhost
+
+tasks:
+  setup:
+    cmds:
+      - task: db:init
+      - task: db:migrate
+```
+
+---
+
+## 5. Control Flow and Execution Behavior
+
+### Running Tasks in Specific Directories
+Set `dir` at the task level to run commands elsewhere.
+
+```yaml
+tasks:
+  serve:
+    dir: public
+    cmds:
+      - python3 -m http.server
+```
+
+### Platform Restrictions
+Control on which OS/architecture tasks run.
+
+```yaml
+tasks:
+  win-build:
+    platforms: [windows]
+    cmds:
+      - echo "Building for Windows"
+```
+
+### Preconditions and Status Checks
+- Use `preconditions` to require conditions before running.
+- Use `status` to check if a task is up to date and can be skipped.
+
+```yaml
+tasks:
+  build:
+    preconditions:
+      - test -f Makefile
+    status:
+      - test -f app
+    cmds:
+      - make all
+```
+
+### Run Behavior
+The `run` keyword controls how often tasks are invoked:
+- `always` (default)
+- `once` - run only once
+- `when_changed` - run only if inputs changed
+
+---
+
+## 6. Advanced Features: Loops, Variables, and Dynamic Content
+
+### Looping Over Lists and Maps
+Use the `for` syntax in `cmds` to repeat commands.
+
+```yaml
+tasks:
+  greet:
+    vars:
+      NAMES: [alice, bob, charlie]
+    cmds:
+      - for: { var: NAMES, as: NAME }
+        cmd: echo "Hello {{.NAME}}"
+```
+
+### Matrix Loops
+Loop over combinations of values.
+
+```yaml
+tasks:
+  test-matrix:
+    cmds:
+      - for:
+          matrix:
+            OS: [linux, windows]
+            ARCH: [amd64, arm64]
+        cmd: echo "Testing {{.ITEM.OS}}/{{.ITEM.ARCH}}"
+```
+
+### Dynamic Variables
+Use shell commands to inject values at runtime.
+
+```yaml
+vars:
+  BRANCH:
+    sh: git branch --show-current
+```
+
+Ensure shell commands do not block task execution or cause unexpected behavior.
+
+---
+
+## 7. Best Practices & Common Pitfalls
+
+- **Version Compatibility**: Ensure included Taskfiles use the same version (`version: '3'`).
+- **Avoid Dotenv in Included Taskfiles**: `.env` loading (`dotenv:`) must be declared in the main Taskfile only.
+- **Namespace Clashes**: When using `flatten`, avoid task name collisions.
+- **Variable Precedence**: Variables are resolved in order: task local, call variables, included Taskfile vars, includes vars, global vars, environment variables.
+- **Use `prompt` for Destructive Tasks**: Always prompt for confirmation before running dangerous commands.
+- **Leverage Fingerprinting** with `sources` and `generates` to skip redundant work.
+
+---
+
+## 8. Troubleshooting Tips
+
+- If an included Taskfile is missing, verify path correctness or mark it `optional: true`.
+- Use `task --verbose` for detailed debugging output.
+- Check variables with `echo {{.VAR}}` in a test task to verify interpolation.
+- For dynamic variables, ensure shell commands work independently.
+
+---
+
+## 9. Example: Putting It All Together
+
+```yaml
+version: '3'
+
+vars:
+  APP_NAME: 'MyApp'
+  BUILD_TAG:
+    sh: git rev-parse --short HEAD
+
+env:
+  DEPLOY_ENV: development
+
+dotenv: ['.env']
+
+includes:
+  common:
+    taskfile: ./taskfiles/common.yml
+    vars:
+      LOG_LEVEL: info
+
+tasks:
+  build:
+    desc: 'Build the application'
+    deps: [pre-build]
+    cmds:
+      - echo "Building {{.APP_NAME}} with tag {{.BUILD_TAG}}"
+      - go build -o bin/{{.APP_NAME}} .
+
+  pre-build:
+    cmds:
+      - task: common:lint
+      - task: common:test
+
+  deploy:
+    desc: 'Deploy application'
+    env:
+      DEPLOY_ENV: production
+    cmds:
+      - ./deploy.sh --env {{.DEPLOY_ENV}}
+    prompt: 'Are you sure you want to deploy?'
+```
+
+This example demonstrates variables, includes, dependencies, environment overrides, prompts, and dynamic variables.
+
+---
+
+## 10. Further Learning
+
+- [Project Initialization](https://taskfile.dev/docs/getting-started/first-steps/project-setup) - How to create your first Taskfile.
+- [Writing and Running Tasks](https://taskfile.dev/docs/guides/getting-started-workflows/writing-running-tasks) - Best practices to author tasks.
+- [Variables and Templating](https://taskfile.dev/docs/guides/advanced-features-best-practices/variables-and-templating) - Deep dive into dynamic and complex variables.
+- [Including and Sharing Taskfiles](https://taskfile.dev/docs/guides/advanced-features-best-practices/including-sharing-taskfiles) - Managing multi-file setups.
+
+<Tip>
+For a comprehensive reference, review the [Configuration Reference](https://taskfile.dev/docs/reference/config) and [Templating Reference](https://taskfile.dev/docs/reference/templating) to master the full power of Taskfiles.
+</Tip>
+
+---
