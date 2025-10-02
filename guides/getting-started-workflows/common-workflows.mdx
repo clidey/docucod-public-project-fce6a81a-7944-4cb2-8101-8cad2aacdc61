@@ -1,0 +1,273 @@
+---
+title: "Common Automation Workflows"
+description: "Explore practical Taskfile patterns for typical development workflows such as linting, testing, building, and deployment. Includes templates and real-world project snippets to accelerate adoption."
+---
+
+# Common Automation Workflows
+
+Explore practical Taskfile patterns and templates for typical development workflows such as linting, testing, building, and deployment. This guide provides ready-to-use examples and real-world snippets to accelerate your adoption of Task for project automation.
+
+---
+
+## Workflow Overview
+
+### What This Guide Helps You Do
+This guide walks you through common automation workflows frequently used in software projects, including:
+
+- Running linters and applying automated fixes
+- Building project binaries and helper tools
+- Running test suites with common configurations
+- Automating release preparation and versioning
+- Cleaning up generated files and directories
+
+Each workflow is expressed as a Taskfile pattern or snippet, designed to be immediately reusable or adaptable to your projects.
+
+### Prerequisites
+- You have Task installed and configured according to [Installation & First Taskfile](https://taskfile.dev/guides/getting-started-workflows/installation-setup).
+- Basic familiarity with writing and running Taskfiles as covered in [Writing and Running Tasks](https://taskfile.dev/guides/getting-started-workflows/writing-running-tasks).
+- Your project's source files and tools are ready and accessible.
+
+### Expected Outcomes
+After applying these workflows, you'll have:
+- Reliable Taskfile recipes for linting, testing, building, and releasing
+- Improved automation that guards against unnecessary work with fingerprinting
+- Clear task definitions using best-practice patterns for modular, maintainable automation
+
+### Estimated Time
+Following and adapting these examples generally takes 10-30 minutes per workflow depending on your project size and familiarity.
+
+### Difficulty Level
+Intermediate — assumes you know task basics but want practical, real-world idioms
+
+---
+
+## Common Automation Workflows
+
+### 1. Linting and Formatting
+Automate code quality checks with tasks that run your linter and optionally fix issues.
+
+```yaml
+lint:
+  desc: Runs golangci-lint
+  aliases: [l]
+  sources:
+    - './**/*.go'
+    - .golangci.yml
+    - go.mod
+  cmds:
+    - golangci-lint run
+
+lint:fix:
+  desc: Runs golangci-lint and fixes any issues
+  sources:
+    - './**/*.go'
+    - .golangci.yml
+    - go.mod
+  cmds:
+    - golangci-lint run --fix
+
+format:
+  desc: Runs golangci-lint and formats Go files
+  aliases: [fmt, f]
+  sources:
+    - './**/*.go'
+    - .golangci.yml
+  cmds:
+    - golangci-lint fmt
+```
+
+**Tips:**
+- Use `sources` to scope linting only to relevant files, improving speed.
+- Use task aliases for quicker CLI commands (`task l` for lint).
+- Consider adding `lint:fix` as a precommit hook task.
+
+---
+
+### 2. Building Project Binaries and Tools
+Define build tasks that compile your main application or helper tools.
+
+```yaml
+sleepit:build:
+  desc: Builds the sleepit test helper
+  sources:
+    - ./cmd/sleepit/**/*.go
+  generates:
+    - '{{.BIN}}/sleepit'
+  cmds:
+    - go build -o {{.BIN}}/sleepit{{exeExt}} ./cmd/sleepit
+
+install:
+  desc: Installs Task
+  aliases: [i]
+  sources:
+    - './**/*.go'
+  cmds:
+    - go install -v ./cmd/task
+```
+
+**Tips:**
+- Use `sources` and `generates` to enable fingerprinting and avoid unnecessary builds.
+- Leverage variables like `{{.BIN}}` and built-in template functions (`exeExt`) to adapt output paths per OS.
+
+---
+
+### 3. Running Tests
+Tasks for executing your test suite with common tools and custom environment setups.
+
+```yaml
+test:
+  desc: Runs test suite
+  aliases: [t]
+  deps: [gotestsum:install]
+  sources:
+    - '**/*.go'
+    - 'testdata/**/*'
+  cmds:
+    - gotestsum -f '{{.GOTESTSUM_FORMAT}}' ./...
+
+gotestsum:install:
+  desc: Installs gotestsum
+  status:
+    - command -v gotestsum
+  cmds:
+    - go install gotest.tools/gotestsum@latest
+```
+
+**Tips:**
+- Use a `status` check before install tasks to speed up repeated runs.
+- Use environment variables in the Taskfile (see `.GOTESTSUM_FORMAT` variable) to customize output depending on CI presence.
+
+---
+
+### 4. Clean Temporary Files
+Easily remove temporary and build artifact directories.
+
+```yaml
+clean:
+  desc: Cleans temp files and folders
+  aliases: [clear]
+  cmds:
+    - rm -rf dist/
+    - rm -rf tmp/
+```
+
+**Tips:**
+- Use `aliases` for common commands (`task clear`).
+- Chain clean tasks with other workflows to automate resetting state.
+
+---
+
+### 5. Release Preparation and Tagging
+A parameterized release task that bumps versions, tags, and pushes changes.
+
+```yaml
+release:*:
+  desc: Prepare the project for a new release
+  summary: |
+    This task will do the following:
+
+    - Update the version and date in the CHANGELOG.md file
+    - Update version in package files
+    - Commit, create tags, and push to remote
+
+  vars:
+    VERSION:
+      sh: "go run ./cmd/release --version {{index .MATCH 0}}"
+    COMPLETE_MESSAGE: |
+      Creating release with GoReleaser: https://github.com/go-task/task/actions/workflows/release.yml
+
+      Please wait for the CI to finish and then do the following:
+
+      - Copy the changelog for v{{.VERSION}} to the GitHub release
+      - Update and push the snapcraft manifest
+
+  preconditions:
+    - sh: test $(git rev-parse --abbrev-ref HEAD) = "main"
+      msg: "You must be on the main branch to release"
+    - sh: "[[ -z $(git diff --shortstat main) ]]"
+      msg: "You must have a clean working tree to release"
+
+  prompt: "Are you sure you want to release version {{.VERSION}}?"
+
+  cmds:
+    - cmd: echo "Releasing v{{.VERSION}}"
+      silent: true
+    - go run ./cmd/release {{.VERSION}}
+    - git add --all
+    - git commit -m v{{.VERSION}}
+    - git push
+    - git tag v{{.VERSION}}
+    - git push origin tag v{{.VERSION}}
+    - cmd: printf "%s" '{{.COMPLETE_MESSAGE}}'
+      silent: true
+```
+
+**Tips:**
+- Use a wildcard `release:*` task so you can call `task release:patch` or `task release:major`.
+- Add `preconditions` checks to ensure proper branch and clean working directory.
+- Use prompts to protect against accidental releases.
+
+---
+
+### 6. Composite and Grouped Workflows
+Combine tasks in `deps` and `cmds` to create robust composite workflows:
+
+```yaml
+default:
+  cmds:
+    - task: lint
+    - task: test
+
+generate:
+  aliases: [gen, g]
+  cmds:
+    - task: generate:mocks
+    - task: generate:fixtures
+
+generate:mocks:
+  desc: Runs Mockery to create mocks
+  deps: [install:mockery]
+  sources:
+    - "internal/fingerprint/checker.go"
+  generates:
+    - "internal/mocks/*.go"
+  cmds:
+    - find . -type f -name *_mock.go -delete
+    - "{{.BIN}}/mockery"
+```
+
+**Tips:**
+- Always include source and generate files for fingerprinting to optimize execution.
+- Use task aliases to create short and expressive commands.
+- Group related tasks with deps and composite tasks to improve automation clarity.
+
+---
+
+## Troubleshooting & Best Practices
+
+### Common Issues
+- **Task not found:** Ensure the task name is spelled correctly; check aliases and included Taskfiles.
+- **Up-to-date tasks still running:** Check your `sources` and `generates` globs for correctness.
+- **Tasks fail silently:** Verify that `silent` or `ignore_error` flags are not hiding errors.
+- **Prompt not showing / prompts failing on CI:** Use `--yes` option or disable prompts during CI.
+
+### Best Practices
+- Use `sources` and `generates` for accurate up-to-date checking to avoid redundant work.
+- Keep your Taskfile modular by using [includes](https://taskfile.dev/#/usage?id=including-other-taskfiles) for shared tasks.
+- Use `prompt` to guard dangerous tasks and `--yes` flag for automated environments.
+- Leverage `status` and `preconditions` for conditional execution.
+- Use built-in variables and templating for dynamic task behavior.
+
+---
+
+## Next Steps & Related Content
+
+- Explore [Writing and Running Tasks](https://taskfile.dev/guides/getting-started-workflows/writing-running-tasks) for full instructions on task syntax and calling conventions.
+- Learn about [Variables and Templating](https://taskfile.dev/guides/advanced-features-best-practices/variables-and-templating) for creating dynamic and reusable workflows.
+- See [Including and Sharing Taskfiles](https://taskfile.dev/guides/advanced-features-best-practices/including-sharing-taskfiles) to structure large automation codebases.
+- Read about [Conditional Execution & Preconditions](https://taskfile.dev/guides/advanced-features-best-practices/conditional-execution-preconditions) for advanced task flow control.
+- Review [Command Line Interface Reference](https://taskfile.dev/docs/reference/cli) for all flags that affect how these workflows run.
+
+---
+
+This guide equips you with practical, immediately actionable Taskfile recipes for common automation needs, empowering smooth project workflows and easier onboarding.

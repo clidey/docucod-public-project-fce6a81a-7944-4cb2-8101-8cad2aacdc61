@@ -1,0 +1,295 @@
+---
+title: "Task and Shell Scripting"
+description: "Best practices for combining Task with shell scripts, handling inputs and outputs, and using Task to standardize project-wide scripting. Discusses portability and troubleshooting of shell commands in Taskfiles."
+---
+
+# Task and Shell Scripting
+
+Best practices for combining Task with shell scripts, handling inputs and outputs, and using Task to standardize project-wide scripting. This guide discusses portability and troubleshooting of shell commands in Taskfiles.
+
+---
+
+## 1. Overview
+
+### What You Will Achieve
+This guide helps you seamlessly integrate shell scripting into your Task workflows. You'll learn how to embed shell commands in Tasks, pass inputs and outputs effectively, ensure portability across platforms, and troubleshoot common shell-related issues within Taskfiles.
+
+### Prerequisites
+- Basic familiarity with writing Taskfiles and invoking tasks
+- Understanding of shell scripting concepts (Bash-compatible)
+- Task installed on your development system
+
+### Expected Outcome
+By the end, you'll confidently write Task commands that leverage shell scripts, handle arguments, manage output, and maintain cross-platform compatibility using Task’s features.
+
+### Time Estimate
+15-30 minutes to read and experiment with examples.
+
+### Difficulty Level
+Intermediate — assumes some scripting experience and basic Task usage knowledge.
+
+---
+
+## 2. Combining Task with Shell Scripts
+
+Task runs shell commands within tasks using an embedded Bash-compatible interpreter. This allows for compact and powerful scripting without leaving Taskfiles.
+
+### Key Points
+
+- Task interprets all commands with a POSIX-compliant shell:
+  - Use Bash-like syntax (e.g., `if`, `for`, `echo`, pipes).
+  - Avoid platform-specific shell features unless guarded by platform restrictions.
+
+- `cmds:` lists execute as shell commands in sequence.
+
+- Each command honors Task's `dir:`, `env:`, and `silent:` settings.
+
+### Example: Basic Shell Commands in Task
+```yaml
+version: '3'
+tasks:
+  greet:
+    cmds:
+      - echo "Hello, world!"
+      - ls -l ./src
+```
+
+Expected result: Lists the contents of `./src` with detailed info following greeting.
+
+### Best Practice
+Write simple, declarative shell commands directly under `cmds:` for clarity.
+
+---
+
+## 3. Handling Inputs and Outputs
+
+Shell scripting often requires passing inputs, capturing outputs, and processing command parameters.
+
+### Passing Variables and Arguments
+- Use Task variables and templating (`{{.VAR_NAME}}`) to insert inputs into shell commands.
+- The special variable `CLI_ARGS` captures anything passed after `--` when running a task.
+
+Example:
+```yaml
+tasks:
+  echo-args:
+    cmds:
+      - echo "Arguments: {{.CLI_ARGS}}"
+```
+Run as:
+```bash
+task echo-args -- first second "third arg"
+```
+Output:
+```
+Arguments: first second third arg
+```
+
+### Capturing Command Output
+- You can redirect command output to files directly in shell commands.
+- Use task outputs or relies on Task's `status:` to manage generated files.
+
+Example:
+```yaml
+tasks:
+  save-list:
+    cmds:
+      - ls > filelist.txt
+```
+
+### Using `defer:` Commands for Cleanup
+- Use `defer:` to run shell scripts after task completion, e.g., cleanup or summarizing.
+
+Example:
+```yaml
+tasks:
+  run-and-clean:
+    cmds:
+      - echo "Doing main work"
+      - defer: rm -f tmpfile.txt
+      - touch tmpfile.txt
+```
+
+The `rm -f tmpfile.txt` runs after all other commands, even if they fail.
+
+---
+
+## 4. Standardizing Project-wide Scripting with Task
+
+Task encourages centralizing your shell scripts inside Taskfiles for consistency and ease of use.
+
+### Use Cases
+- Replace ad-hoc shell scripts with well-defined Tasks
+- Abstract platform differences
+- Provide a single interface for common scripts
+
+### Tips
+- Use Task variables to pass script parameters.
+- Structure tasks with dependencies and namespaces for modularity.
+- Use `vars:` with `{sh: ...}` blocks to embed dynamic shell-generated variables.
+
+Example:
+```yaml
+vars:
+  CURRENT_BRANCH:
+    sh: git rev-parse --abbrev-ref HEAD
+
+tasks:
+  show-branch:
+    cmds:
+      - echo "Current branch is {{.CURRENT_BRANCH}}"
+```
+
+This dynamically runs the shell command once, captures output, and uses it as a variable.
+
+---
+
+## 5. Portability Best Practices
+
+Ensuring your shell commands run across platforms (Linux, macOS, Windows) can be challenging.
+
+### Built-in Core Utilities on Windows
+Task version 3.45.3 and later includes Go implementations of common core utilities like `cp`, `mv`, `mkdir`, etc., on Windows by default. This fixes many compatibility issues.
+
+- To control usage, use the environment variable `TASK_CORE_UTILS`:
+  - `TASK_CORE_UTILS=1` to enable (default on Windows)
+  - `TASK_CORE_UTILS=0` to disable
+
+### Recommendations
+- Write standard POSIX shell code without platform-specific extensions.
+- Avoid assuming GNU-specific flags not present on all systems.
+- Use Task’s `platforms:` attribute to restrict platform-specific commands.
+
+Example restricting a command to Linux only:
+```yaml
+tasks:
+  linux-only:
+    platforms: [linux]
+    cmds:
+      - echo "Running on Linux"
+```
+
+---
+
+## 6. Troubleshooting Shell Commands in Taskfiles
+
+Shell scripting is complex; here are common issues and resolutions when using Task:
+
+### Common Issues
+
+- **Shell command syntax errors**: Check your shell syntax carefully, especially quoting inside Task template strings.
+- **Command not found on Windows**: Confirm `TASK_CORE_UTILS` is enabled or adjust scripts to use available tools.
+- **Environment variable expansion fails**: Variables inside shell blocks are expanded by Task templating and then the shell; quote and escape accordingly.
+- **Commands behave differently than in standalone shell**: Task uses an embedded shell interpreter which may differ from your OS shell.
+
+### Debugging Tips
+- Run Task with `--verbose` for detailed command output and environment.
+- Use `echo` to print variables inside shell commands to verify values.
+- Isolate shell commands and test in your system shell to validate syntax.
+
+### Example Debug Task
+```yaml
+tasks:
+  debug-shell:
+    cmds:
+      - set -x
+      - echo "VAR is '{{.MYVAR}}'"
+      - ls -l
+```
+Run with:
+```bash
+MYVAR=test task debug-shell --verbose
+```
+---
+
+## 7. Advanced Tips
+
+- Use `sh:` style dynamic variables for complex shell logic.
+- Leverage the `shellQuote` template function to safely escape string arguments.
+
+Example:
+```yaml
+vars:
+  SAFE_ARG:
+    sh: echo "$(shellQuote "argument with spaces")"
+```
+
+- To handle multiple commands as one shell session, use multiline strings or `cmds:` list.
+
+Example multiline command:
+```yaml
+tasks:
+  multiline:
+    cmds: |
+      echo start
+      cd ./some/dir
+      ls -l
+```
+
+---
+
+## 8. Summary
+
+Combining Task with shell scripting empowers you to build powerful, repeatable automation that is easy to write, maintain, and share. By following portability best practices and using Task’s native shell support and core utilities, you ensure your scripts run reliably across platforms. Troubleshooting is simplified by verbose output and isolating shell issues.
+
+---
+
+## 9. Next Steps & Resources
+
+- Dive deeper into [Using Variables & Templating](/guides/advanced-features-best-practices/variables-and-templating) to master input handling.
+- Explore [Including and Sharing Taskfiles](/guides/advanced-features-best-practices/including-sharing-taskfiles) to modularize shell scripts.
+- Learn about [Conditional Execution & Preconditions](/guides/advanced-features-best-practices/conditional-execution-preconditions) for robust task workflows.
+- Review the [Windows Core Utilities Announcement](https://taskfile.dev/blog/windows-core-utils) blog post for background on cross-platform improvements.
+- Check the official [Task CLI Documentation](https://taskfile.dev/) for command flags and environment variable controls.
+
+---
+
+## 10. Example Taskfile Combining Shell
+```yaml
+version: '3'
+
+vars:
+  CURRENT_BRANCH:
+    sh: git rev-parse --abbrev-ref HEAD
+
+tasks:
+  greet:
+    cmds:
+      - echo "Welcome to branch {{.CURRENT_BRANCH}}"
+
+  list-sources:
+    cmds:
+      - ls ./src > source_files.txt
+      - echo "Source files listed in source_files.txt"
+
+  platform-check:
+    platforms: [linux, darwin]
+    cmds:
+      - echo Operating on {{.OS}}
+
+  windows-copy:
+    platforms: [windows]
+    cmds:
+      - cp source.txt destination.txt
+
+  cleanup:
+    cmds:
+      - touch temp.file
+      - defer: rm -f temp.file
+```
+
+Run this Taskfile with `task greet` or `task list-sources` to see shell scripting in action.
+
+---
+
+<Tip>
+Use `defer:` to guarantee cleanup commands are run, even if preceding commands fail.
+</Tip>
+
+<Note>
+On Windows, enabling built-in core utilities (`TASK_CORE_UTILS=1`) vastly improves scripting compatibility.
+</Note>
+
+<Warning>
+Avoid complex shell-specific constructs without testing them on all target platforms.
+</Warning>

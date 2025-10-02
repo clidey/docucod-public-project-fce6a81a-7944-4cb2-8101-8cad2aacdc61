@@ -1,0 +1,150 @@
+---
+title: "Version Timeline"
+description: "Browse all Task releases in sequence, including each version's release date and a summary of headline features or changes. This allows users to quickly get oriented with past and current development activity, making it easy to decide when and how to upgrade."
+---
+
+# Version Timeline
+
+Welcome to the Version Timeline page, your comprehensive guide to browsing all Task releases in sequence. Here, every version is documented with its release date and a headline summary so you can quickly orient yourself with the evolution of Task, understand notable new features or fixes, and make informed decisions about upgrading.
+
+---
+
+## Understanding the Version Timeline
+
+This page serves as a chronological catalog of Task releases, presented in reverse chronological order (newest first). Each entry provides:
+
+- The exact version number following [Semantic Versioning](https://semver.org/)
+- The official release date
+- A concise executive summary highlighting major changes, new features, improvements, bug fixes, or deprecations
+
+By scanning the timeline, you can easily spot milestones and identify which version aligns with the features or fixes you require.
+
+---
+
+## How to Use This Page Effectively
+
+### Browsing Past Releases
+
+Imagine you encounter a behavior or feature in Task and wonder when it was introduced or changed. This timeline allows you to:
+
+- Locate the release where the feature was added
+- Understand the context or significant fixes made around that time
+- Evaluate whether you need to upgrade your Task version to access that functionality
+
+### Planning Upgrades
+
+Upgrading is a critical maintenance activity. By reviewing this timeline:
+
+- Identify versions with breaking changes or deprecations
+- See when security patches or critical fixes were made
+- Decide if the upgrade path aligns with your team’s schedule
+
+### Staying Informed
+
+Staying current helps you leverage improvements and avoid pitfalls. Use this page to:
+
+- Track the introduction of new features such as support for Windows core utilities or improved watcher performance
+- Note when major documentation updates or ecosystem changes occurred
+- Learn about deprecated features that require migration
+
+---
+
+## Key Versions and Highlights
+
+> The following sample entries present a snapshot of significant releases. Use the full timeline elsewhere in this documentation to explore all versions.
+
+### v3.45.4 - 2025-09-17
+
+- Fixes bugs with `.taskrc.yml` handling including cache expiry and autocomplete
+
+### v3.45.3 - 2025-09-15
+
+- Introduced built-in core utilities support for Windows enabling native commands like `cp`, `mv`, `mkdir` to work seamlessly
+- Released a new [Taskfile.dev website](https://taskfile.dev) with enhanced documentation
+- Launched nightly builds for early testing
+- Added support for global config files in standard XDG paths
+
+### v3.44.1 - 2025-07-23
+
+- Internal tasks excluded from suggestions
+- Fixed install script and fingerprinting regressions
+- New fixture test variables introduced
+
+### v3.44.0 - 2025-06-08
+
+- New template functions added (`uuid`, `randInt`)
+- Introduced `CLI_ARGS_LIST` array variable
+- Support for pinning included Taskfiles by checksum
+
+### v3.43.1 - 2025-04-21
+
+- Watcher improved by switching to `fsnotify` for better file system event handling and lower CPU usage
+- Map Variables experiment graduated to general availability
+
+---
+
+## Versioning and Release Structure
+
+### Semantic Versioning
+
+Task follows semantic versioning rules with Versions expressed as `MAJOR.MINOR.PATCH`. For example:
+
+- **MAJOR**: Introduces incompatible API or schema changes
+- **MINOR**: Adds functionality in a backwards-compatible manner
+- **PATCH**: Backwards-compatible bug fixes
+
+The timeline documents versions accordingly, helping you understand the significance of upgrades at a glance.
+
+### Release Types
+
+- **Major releases** often introduce new schema versions or deprecations (e.g., v3.x.0)
+- **Minor releases** add new features or enhancements
+- **Patch releases** focus on bug fixes and optimizations
+
+### Release Dates
+
+Each entry includes the date the release was officially published, enabling correlation to your environment and deployment cycles.
+
+---
+
+## Tips for Using This Timeline
+
+- **Check for Breaking Changes:** Before upgrading, cross-reference with our [Breaking Changes & Migration Notes](/changelog/upgrade-guides/breaking-changes) page.
+
+- **Review Deprecations:** Identify deprecated features early to plan smooth transitions by visiting [Deprecation Notices](/changelog/detail-changes/deprecations).
+
+- **Explore Detailed Release Notes:** For granular feature sets and fixes, explore [New Features & Improvements](/changelog/detail-changes/features-improvements) and [Bug Fixes & Patches](/changelog/detail-changes/bug-fixes-patches).
+
+- **Use Upgrade Guides:** Step-by-step instructions are available in [Upgrade Guides](/changelog/upgrade-guides/upgrade-instructions) to support safe version transitions.
+
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup title="FAQs about Version Timeline">
+<Accordion title="Can I rely on this timeline to plan upgrades?">
+Absolutely. This timeline reflects the authoritative release history and is updated alongside every official Task release.
+</Accordion>
+<Accordion title="Are all versions still supported?">
+Support policies vary. Typically, the latest major version receives updates, while older versions may be deprecated. Refer to the support policy in the broader changelog documentation.
+</Accordion>
+<Accordion title="Where can I find full release notes?">
+Detailed release notes including fixes, features, and contributors are linked from the changelog overview and detailed sections.
+</Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps and Related Documentation
+
+To build on your knowledge from the Version Timeline:
+
+- Visit [Breaking Changes & Migration Notes](/changelog/upgrade-guides/breaking-changes) to understand impactful changes.
+- Review [Upgrade Guides](/changelog/upgrade-guides/upgrade-instructions) for recommended upgrade workflows.
+- Explore [New Features & Improvements](/changelog/detail-changes/features-improvements) for insights into feature releases.
+- Use the [Taskfile Versions](https://taskfile.dev/taskfile_versions) page to manage schema compatibility.
+- Consult [Release Process](/releasing) to understand how Task releases are built and published.
+
+---
+
+_By exploring the Version Timeline, you empower yourself to harness Task’s full potential with confidence and precision._

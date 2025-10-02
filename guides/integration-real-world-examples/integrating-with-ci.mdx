@@ -1,0 +1,250 @@
+---
+title: "Integrating Task with CI/CD"
+description: "How to use Task to orchestrate workflows in popular Continuous Integration systems (GitHub Actions, GitLab CI, etc.). Walks through setup, passing variables, and promoting portable builds."
+---
+
+# Integrating Task with CI/CD Workflows
+
+Task is a powerful and flexible automation tool designed to simplify the orchestration of workflows in Continuous Integration (CI) systems like GitHub Actions, GitLab CI, and others. This guide will walk you through how to leverage Task within these popular CI environments to create repeatable, portable, and efficient build and deployment pipelines.
+
+---
+
+## 1. Workflow Overview
+
+### What This Guide Will Help You Achieve
+You will learn how to set up Task to run tasks and workflows within common CI systems, pass variables between Task and your CI environment, and maintain portability of your builds across platforms.
+
+### Prerequisites
+- A project with a Taskfile (Taskfile.yml) configured for your automation needs.
+- Basic understanding of your CI environment (GitHub Actions, GitLab CI, etc.).
+- Installed Task CLI available on the CI runner or image.
+
+### Expected Outcome
+By following this guide, you will be able to:
+- Invoke Task tasks as part of your CI pipelines.
+- Pass environment variables and Task variables seamlessly.
+- Use Task’s fingerprinting and caching features to optimize builds.
+- Promote build portability through Task’s consistent execution.
+
+### Time Estimate
+Setup and testing typically take 30-60 minutes, depending on your familiarity with your CI environment.
+
+### Difficulty Level
+Intermediate — assumes basic experience with CI systems and task automation.
+
+---
+
+## 2. How Task Fits Into CI/CD Pipelines
+
+Task serves as an automation layer inside your CI systems, allowing you to:
+- Define complex multi-step workflows in one Taskfile.
+- Manage environment variables and dynamic parameters compactly.
+- Leverage caching and up-to-date checks to speed up repeated builds.
+- Modularize automation logic by including external or internal Taskfiles.
+
+Using Task in your CI pipelines improves maintainability and portability, keeping your automation scripts consistent across local, staging, and production workflows.
+
+---
+
+## 3. Step-by-Step Instructions
+
+### Step 1: Ensure Task Is Installed in Your CI Environment
+
+Most CI platforms provide a way to run custom commands in the build agent. Add a setup step to install the latest Task CLI:
+
+```yaml
+# Example: GitHub Actions snippet
+steps:
+  - name: Install Task CLI
+    run: |
+      curl -sL https://taskfile.dev/install.sh | sh
+      export PATH=$HOME/.task/bin:$PATH
+```
+
+For GitLab CI or others, insert an appropriate shell command in the relevant step.
+
+---
+
+### Step 2: Add Your Taskfile to the Repository
+
+Ensure your Taskfile.yml is checked into your repository root or accessible location. Define tasks that automate your build, test, and deployment steps according to your project requirements.
+
+Example from a Taskfile for checksum and timestamp tasks:
+
+```yaml
+version: '3'
+tasks:
+  build-checksum:
+    sources:
+      - ./source.txt
+    cmds:
+      - echo "{{.CHECKSUM}}"
+
+  build-ts:
+    method: timestamp
+    sources:
+      - ./source.txt
+    cmds:
+      - echo '{{.TIMESTAMP.Unix}}'
+      - echo '{{.TIMESTAMP}}'
+```
+
+---
+
+### Step 3: Configure Your CI to Run Tasks
+
+Invoke Task commands as build steps in your CI configuration. For example:
+
+```yaml
+# GitHub Actions build step example
+steps:
+  - name: Run build checksum task
+    run: task build-checksum
+
+  - name: Run timestamp task
+    run: task build-ts
+```
+
+This runs the defined Task tasks inside your CI job, leveraging all Task features such as caching, dependency management, and variable templating.
+
+---
+
+### Step 4: Passing Variables Between Task and CI
+
+CI environments supply environment variables. Task supports environment variables and Taskfile variables interchangeably.
+
+- Use environment variables prefixed with `TASK_` to configure Task behavior.
+- Pass custom variables in your CI job environment that Task can consume.
+
+Example passing a variable from CI to Task:
+
+```yaml
+# GitHub Actions example
+env:
+  BUILD_VERSION: v1.2.3
+
+steps:
+  - name: Run build with version
+    run: task build -- BUILD_VERSION=${{ env.BUILD_VERSION }}
+```
+
+In your Taskfile, reference this variable:
+
+```yaml
+tasks:
+  build:
+    cmds:
+      - echo "Building version {{.BUILD_VERSION}}"
+```
+
+This facilitates clear communication of parameters and versions between your CI system and Task.
+
+---
+
+### Step 5: Promote Portability and Reusability
+
+Use Taskfile includes to share common automation across projects or repositories:
+
+```yaml
+includes:
+  common-tasks:
+    taskfile: https://taskfile.dev/common/Taskfile.yml
+    internal: true
+    checksum: c153e97e0b3a998a7ed2e61064c6ddaddd0de0c525feefd6bba8569827d8efe9
+
+tasks:
+  default:
+    cmds:
+      - task: common-tasks:default
+```
+
+This approach promotes DRY principles and consistent build logic across CI pipelines.
+
+---
+
+### Step 6: Optimize Builds With Fingerprinting
+
+Use Task's fingerprinting capabilities to avoid redundant execution in CI:
+
+```yaml
+tasks:
+  default:
+    sources:
+      - source.txt
+    method: checksum
+    cmds:
+      - echo "Source checksum changed, building..."
+```
+
+When the inputs do not change, Task skips the task automatically, reducing build times.
+
+---
+
+## 4. Real-World Example: Integrating Task with GitHub Actions
+
+Here is a minimal example of a GitHub Actions workflow using Task:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Task
+      run: |
+        curl -sL https://taskfile.dev/install.sh | sh
+        echo "$HOME/.task/bin" >> $GITHUB_PATH
+
+    - name: Run Lint and Test
+      run: task lint test
+```
+
+This pipeline checks out the code, installs Task, and runs lint and test tasks defined in your Taskfile.
+
+---
+
+## 5. Troubleshooting & Tips
+
+### Common Issues
+- **Task CLI is not found during CI runs**: Make sure the Task binary path is added to your PATH.
+- **Environment variables not recognized by Task**: Confirm the variable names and that they are exported in the CI environment.
+- **Task skips tasks unexpectedly**: Verify your fingerprinting sources and method settings.
+
+### Best Practices
+- Use environment variables to align Task configuration with CI parameters.
+- Modularize Taskfiles with includes to maintain reusable automation.
+- Exploit fingerprinting and caching to optimize CI runtime.
+- Always pin Task versions in CI for reproducible builds.
+
+### Performance Considerations
+- Configure fingerprint methods carefully; checksum is exact but has overhead, timestamp is simpler but less precise.
+- Run tasks in parallel in CI if appropriate using Task's dependencies or CI parallel jobs.
+
+---
+
+## 6. Next Steps & Related Content
+
+- Read [Basic Configuration & Taskfile Structure](https://taskfile.dev/guides/getting-started-workflows/writing-running-tasks) to deepen understanding of task definitions.
+- Explore [Using Variables & Templating](https://taskfile.dev/guides/advanced-features-best-practices/variables-and-templating) for advanced variable handling.
+- Check [Performance & Parallelism Tips](https://taskfile.dev/guides/advanced-features-best-practices/performance-parallelism) for optimizing your automations.
+- Visit [Including and Sharing Taskfiles](https://taskfile.dev/guides/advanced-features-best-practices/including-sharing-taskfiles) to learn how to share Taskfiles across projects.
+
+---
+
+For additional info on environment variables related to Task, see the [Environment Reference](https://taskfile.dev/reference/environment).
+
+---
+
+Embrace Task within your CI pipelines to vastly simplify and speed up your automation workflows with portable, maintainable, and powerful Taskfiles.
+
+
+---

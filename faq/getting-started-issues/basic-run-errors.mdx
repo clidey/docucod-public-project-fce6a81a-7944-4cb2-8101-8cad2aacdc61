@@ -1,0 +1,226 @@
+---
+title: "Resolving Task Execution Errors"
+description: "Guides users through common errors encountered when running tasks, such as missing commands, task not found, or dependency issues. Offers troubleshooting steps for standard run errors."
+---
+
+# Resolving Task Execution Errors
+
+When running tasks with Task, you may encounter errors such as missing tasks, command failures, or dependency issues. This guide walks you through understanding common execution errors and provides actionable steps to diagnose and resolve them efficiently.
+
+---
+
+## 1. Common Execution Errors
+
+### Task Not Found
+**Symptom:** You run `task <task_name>`, and receive an error similar to:
+
+```
+task: Task "<task_name>" does not exist. Did you mean "<suggested_task_name>"?
+```
+
+**What it means:** The task you requested does not exist in the current Taskfile or its includes. Task also attempts to suggest similar task names for correction.
+
+**How to fix:**
+- Verify the task name is spelled correctly.
+- Use `task --list` to view all available tasks.
+- If using namespaces or includes, ensure you're referencing the fully qualified task name.
+
+### Task Is Internal
+**Symptom:** Attempting to run an internal task results in:
+
+```
+task: Task "<task_name>" is internal
+```
+
+**What it means:** The task is marked as internal and is not intended for direct invocation.
+
+**How to fix:**
+- Internal tasks are generally dependencies or helpers; run a public task that depends on them instead.
+- Remove the `internal: true` attribute if you want the task to be runnable directly.
+
+### Task Name Conflict
+**Symptom:** Running a task name that matches multiple tasks yields:
+
+```
+task: Found multiple tasks (<task1>, <task2>) that match "<task_name>"
+```
+
+**What it means:** There are multiple tasks with the same name or alias (common with includes or flattening), leading to ambiguity.
+
+**How to fix:**
+- Use fully qualified task names including the namespace (e.g., `namespace:task`).
+- Rename conflicting tasks or avoid flattening includes indiscriminately.
+
+### Task Called Too Many Times
+**Symptom:** The following error appears:
+
+```
+task: Maximum task call exceeded (<N>) for task "<task_name>": probably a cyclic dep or infinite loop
+```
+
+**What it means:** Task detected a cycle or infinite recursion in task calls or dependencies.
+
+**How to fix:**
+- Check your task dependencies for circular references.
+- Avoid tasks calling each other directly or indirectly without termination.
+
+### Task Missing Required Variables
+**Symptom:** Task aborts with a message like:
+
+```
+task: Task "<task_name>" cancelled because it is missing required variables: VAR1, VAR2
+```
+
+**What it means:** The task requires variables that are not set or are missing.
+
+**How to fix:**
+- Set required variables in your Taskfile, environment, or CLI.
+- Use defaults or prompt the user for variables if appropriate.
+
+### Task Not Allowed Variables
+**Symptom:** You get an error:
+
+```
+task: Task "<task_name>" cancelled because it is missing required variables:
+  - VAR has an invalid value : '<value>' (allowed values : [list])
+```
+
+**What it means:** A variable has a value outside the allowed set.
+
+**How to fix:**
+- Ensure variables meet the allowed values defined in your Taskfile.
+- Correct variable assignment or CLI overrides.
+
+### Task Command Fails (Non-Zero Exit)
+**Symptom:** Task execution halts with:
+
+```
+task: Failed to run task "<task_name>": <command error details>
+```
+
+**What it means:** One or more commands within the task returned a non-zero exit status.
+
+**How to fix:**
+- Check the command output for errors.
+- Use `ignore_error: true` on commands you expect to fail and want to bypass.
+- Run task with `--verbose` to get detailed logs.
+
+### Task Cancelled by User
+**Symptom:** If a task has a prompt and the user cancels, you see:
+
+```
+task: Task "<task_name>" cancelled by user
+```
+
+**What it means:** The prompt was declined or the environment does not support prompting.
+
+**How to fix:**
+- Run with `--yes` to bypass prompts.
+- Ensure your environment supports interactive terminal prompts.
+
+---
+
+## 2. Troubleshooting Steps
+
+Follow these steps to systematically resolve task execution errors:
+
+<Steps>
+  <Step title="Verify Task Existence and Namespaces">
+  Start by running `task --list` to see all available tasks. Confirm your task name matches exactly. When using includes or namespaces, specify the scoped task name like `docs:build`.
+  </Step>
+  <Step title="Check for Circular Dependencies">
+  Review your tasks’ `deps` to ensure no cycles exist. Cycles cause infinite recursion detected by Task.
+  </Step>
+  <Step title="Validate Required Variables">
+  If your task needs variables, ensure they are set via environment variables or Taskfile defaults. Use the CLI flag `--set VAR=value` if needed.
+  </Step>
+  <Step title="Review Command Exit Status">
+  Identify which command failed and inspect its output. Use `ignore_error` to allow certain expected failures.
+  </Step>
+  <Step title="Check Preconditions">
+  If using preconditions, make sure their commands succeed; precondition failure aborts task execution.
+  </Step>
+  <Step title="Handle Prompts and Cancellation">
+  For prompt-enabled tasks, run interactively or use `--yes` to skip prompts.
+  </Step>
+  <Step title="Enable Verbose Logging">
+  Run `task -v` or `task --verbose` to get detailed error and execution logs for deeper insights.
+  </Step>
+</Steps>
+
+---
+
+## 3. Best Practices to Avoid Execution Errors
+
+- **Explicit Task Naming:** Always use explicit task names, especially in projects using includes and namespaces, to avoid ambiguity.
+- **Define Required Variables Clearly:** Specify all required `vars` in your Taskfile with documented allowed values.
+- **Avoid Dependency Cycles:** Design dependency graphs carefully to prevent infinite loops.
+- **Use Preconditions Wisely:** Use preconditions to guard task execution but ensure they are reliable.
+- **Handle Error Conditions:** Use `ignore_error` only when intentional. Otherwise, allow failed commands to fail the task.
+- **Prompt Safely:** Design prompts conservatively and provide flags to bypass them in CI environments.
+
+---
+
+## 4. Error Message Details
+
+### YAML Parsing and Decode Errors
+If the Taskfile fails to parse with decode errors, the message includes the filename and line, such as:
+
+```
+err:  cannot unmarshal !!str `...` into map[string]any
+file: /path/to/Taskfile.yml:12:4
+```
+
+Check the indicated line for syntax or formatting mistakes.
+
+### Taskfile Versioning Issues
+If the Taskfile lacks a schema `version:` or uses an unsupported version, Task halts with:
+
+```
+task: Missing schema version in Taskfile "/path/to/Taskfile.yml"
+```
+or
+
+```
+task: Invalid schema version in Taskfile "/path/to/Taskfile.yml":
+Schema version (x.y.z) not supported
+```
+
+Add or upgrade the `version:` field appropriately.
+
+---
+
+## 5. Example Error and Resolution
+
+#### Scenario
+Running `task deploy` yields:
+
+```
+task: Task "deploy" does not exist. Did you mean "deploy-prod"?
+```
+
+#### Resolution
+- Run `task --list` and see the task `deploy-prod` exists.
+- Correct the CLI call to `task deploy-prod`.
+
+#### Scenario
+```
+task: Maximum task call exceeded (100) for task "build": probably an cyclic dep or infinite loop
+```
+
+#### Resolution
+- Inspect `build` and its dependencies for circular references.
+- Remove or refactor cyclic dependencies.
+
+---
+
+## 6. Getting Help and Further Resources
+
+- [Installation & Setup Issues FAQ](/faq/getting-started-issues/install-troubleshooting)
+- [Taskfile Syntax and Structure Troubleshooting](/faq/getting-started-issues/taskfile-problems)
+- [Common Automation Workflows Guide](/guides/getting-started-workflows/common-workflows)
+- [Understanding Task Execution Flow](/taskfile_concepts/core_architecture/execution_flow)
+
+<Tip>
+If you repeatedly face unexpected errors, consider running `task --dry` for a dry run or `task --verbose` to see detailed execution logs. These tools help pinpoint problems faster.
+</Tip>

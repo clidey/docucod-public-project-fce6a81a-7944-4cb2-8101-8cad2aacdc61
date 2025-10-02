@@ -1,0 +1,190 @@
+---
+title: "Troubleshooting & Validation"
+description: "Quickly resolve common setup issues, from missing dependencies to misconfigured paths or permissions. Learn how to validate your Taskfile, debug errors, and find further help."
+---
+
+# Troubleshooting & Validation
+
+Quickly resolve common setup issues with Task—whether related to missing dependencies, misconfigured paths, permission errors, or validating your Taskfile’s syntax. This guide walks you through practical steps to debug errors, validate your configuration, and ensure your Task automation runs smoothly.
+
+---
+
+## 1. Common Setup Issues and How to Resolve Them
+
+### Missing or Outdated Dependencies
+
+If Task cannot run due to missing dependencies or outdated versions, follow these steps:
+
+1. **Verify Task installation**
+   - Run `task --version` to confirm Task is installed and accessible.
+   - Expected output: a version number, e.g., `Task v3.x.x`.
+2. **Check system dependencies**
+   - Ensure required tools for your tasks are installed (e.g., Git, Go, or any CLI your tasks rely on).
+   - Use system package managers (e.g., `apt`, `brew`, `choco`) to verify and install missing dependencies.
+3. **Update Task if needed**
+   - Download the latest version from the [official Task releases](https://github.com/go-task/task/releases).
+
+### Permission Issues
+
+If Task fails to read files or execute commands, verify:
+
+- You have read/write permissions for your project and Taskfiles.
+- Scripts or commands invoked in tasks have execution rights (`chmod +x <script>` on Unix-like systems).
+- On Windows, run Command Prompt or PowerShell as Administrator if elevated rights are needed.
+
+### Misconfigured Paths
+
+Errors often arise from incorrect working directories or relative paths:
+
+- Confirm the `dir` or `working directory` setting in your Taskfile or CLI command matches your project structure.
+- Verify source files listed in `sources:` exist and are correctly referenced.
+- If using environment variables for paths, ensure they’re correctly exported or defined.
+
+### Taskfile Syntax and Structure Errors
+
+- Run `task --dry` to compile your Taskfile without execution; errors will be displayed clearly.
+- Check YAML syntax, paying attention to indentation and valid key names.
+- Validate any templates (`{{ ... }}`) for correct variable names.
+
+<Check>
+Use the `task --dry` command early in troubleshooting to catch syntax and configuration errors without side effects.
+</Check>
+
+---
+
+## 2. Validating Your Taskfile
+
+Ensuring your Taskfile is correct and functional is crucial before running automation. Follow these steps:
+
+### Step 1: Basic Syntax Check
+
+Run:
+```bash
+task --dry
+```
+
+- This command compiles and validates your Taskfile.
+- Any syntax errors, unknown keys, or YAML formatting issues will be reported.
+
+### Step 2: Verify Dependencies and Sources
+
+Manually verify:
+- Sources (`sources:`) paths exist.
+- Dependencies (`deps:`) tasks are defined and not circular.
+
+### Step 3: Check Variable Interpolation
+
+- Use `echo` commands within your tasks to print variables for validation.
+- Example task snippet:
+```yaml
+cmds:
+  - echo "Project root: {{.ROOT_DIR}}"
+  - echo "Task executed: {{.TASK}}"
+```
+
+Run task and verify the outputs match expectations.
+
+### Step 4: Utilize Verbose Mode
+
+Run your task with the verbose flag:
+```bash
+task --verbose <taskname>
+```
+
+- This outputs detailed execution logs, showing command resolution, variable interpolation, and task flow.
+
+---
+
+## 3. Debugging Errors During Task Execution
+
+When Task execution fails, these methods help identify root causes effectively.
+
+### Check Error Messages Carefully
+
+- Task outputs error lines that often point to command failures or misconfigurations.
+- Look for common hints such as ‘file not found,’ ‘permission denied,’ or ‘command not recognized.’
+
+### Isolate the Problem
+
+Run individual commands outside Task in your shell:
+- Copy and paste failing commands manually.
+- Confirm they work as expected or reveal more specific errors.
+
+### Use the Force Flag to Bypass Up-to-Date Checks
+
+Sometimes tasks may not run due to Task marking them as “up to date.” Force execution with:
+```bash
+task --force <taskname>
+```
+
+### Check for Circular Dependencies
+
+- Dependency loops can cause unexpected failures.
+- Validate `deps:` chains do not reference each other circularly.
+
+---
+
+## 4. Useful Commands for Troubleshooting
+
+| Command | Purpose |
+|---------|---------|
+| `task --dry` | Validate Taskfile syntax without execution |
+| `task --list` | List all tasks with descriptions |
+| `task --verbose <task>` | Run a task with detailed logs |
+| `task --force <task>` | Force execution regardless of up-to-date checks |
+| `task --status <task>` | Exit non-zero if task is not up-to-date |
+
+---
+
+## 5. When to Seek Further Help
+
+If these troubleshooting steps do not resolve your issue:
+
+- Review the [Troubleshooting FAQ](https://github.com/go-task/task/wiki/Troubleshooting).
+- Consult community forums and issue trackers on the Task GitHub repository.
+- Check related documentation pages for environment setup and configuration basics.
+
+---
+
+## 6. Summary
+
+By methodically validating your Taskfile and understanding common pitfalls, you ensure a smooth automation experience. Use `task --dry` early to catch problems, verify paths and permissions, and employ verbose logs for in-depth debugging. Remember to isolate failing commands, verify your environment, and rely on Task’s rich CLI flags to maintain control over your tasks.
+
+---
+
+## Appendix: Sample Troubleshooting Workflow
+
+<Steps>
+<Step title="Validate your Taskfile syntax">
+Run `task --dry` and fix any syntax errors reported.
+</Step>
+<Step title="List available tasks">
+Use `task --list` to confirm your tasks are defined as expected.
+</Step>
+<Step title="Run specific task in verbose mode">
+Execute `task --verbose <your_task>` to see detailed logs.
+</Step>
+<Step title="Test commands manually">
+Copy failing commands from the verbose output and run them directly in your terminal.
+</Step>
+<Step title="Force task execution">
+If skipping up-to-date checks is needed, run `task --force <your_task>`.
+</Step>
+<Step title="Check environment and permissions">
+Ensure required dependencies are installed, paths are correct, and you have needed permissions.
+</Step>
+</Steps>
+
+---
+
+## Additional Resources
+
+- [Basic Configuration & Taskfile Structure](/getting-started/configuration-troubleshooting/configuration-basics)
+- [Prerequisites & System Requirements](/getting-started/environment-setup/prerequisites)
+- [Project Initialization & First Run](/getting-started/first-steps/project-setup)
+- [Task CLI Reference and Flags](https://github.com/go-task/task/blob/main/docs/cli.md)
+
+<Tip>
+Always keep your Taskfile backed up before troubleshooting complex issues.
+Consistent use of verbose and dry-run modes will save time and headaches.
+</Tip>

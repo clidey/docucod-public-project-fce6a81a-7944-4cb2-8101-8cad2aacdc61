@@ -1,0 +1,136 @@
+---
+title: "Who is Task For? (Audience & Use Cases)"
+description: "Clarifies the types of users who benefit from Task, including developers, DevOps engineers, and anyone automating local or CI/CD workflows. Illustrates common scenarios—dev environment setup, project builds, deployment automation, and simplifying cross-platform scripting—highlighting Task’s flexibility in diverse environments."
+---
+
+# Who is Task For? (Audience & Use Cases)
+
+## Unlocking Automation for Every Developer and DevOps Engineer
+
+Task is designed as a flexible and intuitive task runner that meets the needs of a broad spectrum of users involved in software development and operations. Whether you're a developer seeking a streamlined way to automate local development workflows, a DevOps engineer orchestrating CI/CD pipelines, or anyone aiming to simplify cross-platform scripting tasks, Task is built to help you get more done with less hassle.
+
+## Primary Audiences
+
+- **Developers:** Automate repetitive setup, build, test, and code generation tasks locally with clear, maintainable Taskfiles.
+- **DevOps Engineers:** Integrate Task into CI/CD pipelines for build automation, testing, and deployment in a way that is easy to configure and extend.
+- **System Administrators & Automation Enthusiasts:** Simplify complex scripts across different environments and operating systems, reducing error-prone shell scripting.
+
+## Common Scenarios Where Task Excels
+
+### 1. Development Environment Setup
+
+Developers frequently juggle numerous environment preparation steps: installing dependencies, configuring databases, starting local servers, and running linters or formatters. Task streamlines this with a single source of truth—a Taskfile—that codifies each step clearly and runs them in sequence or in parallel.
+
+```yaml
+version: '3'
+tasks:
+  setup:
+    desc: Setup local dev environment
+    cmds:
+      - task: install-deps
+      - task: start-db
+      - task: lint
+
+  install-deps:
+    cmds:
+      - npm install
+
+  start-db:
+    cmds:
+      - docker-compose up -d db
+
+  lint:
+    cmds:
+      - npm run lint
+```
+
+By running `task setup`, you turn manual, error-prone multi-step instructions into a robust, repeatable command.
+
+### 2. Project Building and Testing
+
+Task makes building your project easier by automating compilation, asset bundling, and running tests with optional watch modes to respond to file changes instantly.
+
+```yaml
+tasks:
+  build:
+    desc: Build the project and assets
+    cmds:
+      - go build -o ./bin/app ./cmd/app
+      - npm run build
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - go test ./...
+    watch: true
+    sources: ["**/*.go"]
+```
+
+Using built-in watches or passing flags like `--watch` accelerates the feedback loop in development.
+
+### 3. Deployment Automation
+
+From packaging releases to pushing images or deploying to cloud services, Task empowers DevOps teams to encode deployment workflows clearly.
+
+```yaml
+tasks:
+  deploy:
+    desc: Deploy app to staging
+    preconditions:
+      - test -n "$DEPLOY_TOKEN"
+    cmds:
+      - ./scripts/build-docker.sh
+      - docker push myrepo/app:staging
+      - ./scripts/notify-deployment.sh
+```
+
+Precondition checks ensure that deployments only proceed when critical variables are set, reducing costly mistakes.
+
+### 4. Cross-Platform Script Simplification
+
+Instead of writing separate shell, PowerShell, or batch scripts, use Task’s platform-specific conditions to maintain a single automation workflow across Windows, macOS, and Linux.
+
+```yaml
+tasks:
+  install-tool:
+    cmds:
+      - cmd: choco install mytool
+        platforms: [windows]
+      - cmd: brew install mytool
+        platforms: [darwin]
+      - cmd: apt-get install -y mytool
+        platforms: [linux]
+```
+
+This allows teams to share automation effortlessly, eliminating platform fragmentation.
+
+## Why Choose Task?
+
+- **Simplicity:** Easy-to-read YAML Taskfiles replace complex shell scripts and Makefiles.
+- **Flexibility:** Supports dependencies, variables, includes, environment management, and conditional logic.
+- **Cross-Platform Compatibility:** Built-in platform constraints ensure tasks run only where intended.
+- **Integration-Ready:** Fits naturally into CI/CD pipelines and automation workflows.
+- **User-Centric Workflows:** Designed around how users think about their automation tasks rather than internal tool mechanics.
+
+## Imagine Your Workflow Without Task
+
+- Wasting time rewiring complex Makefiles or shell scripts every time your project changes.
+- Struggling with inconsistent commands between team members’ environments.
+- Manually coordinating multi-step build or deploy sequences.
+
+## With Task, Everything Flows Seamlessly
+
+- Run a single command to set up your environment or kick off full builds.
+- Share Taskfiles that work uniformly across different OSes.
+- Integrate with CI tools effortlessly using the same automation definitions you use locally.
+
+## Getting Started with Task for Your Use Case
+
+To begin automating your workflows with Task, review the [Getting Started](https://taskfile.dev/getting-started) guides and explore real-world [Common Automation Workflows](https://taskfile.dev/guides/getting-started-workflows/common-workflows). 
+
+## Next Steps
+- Learn [Writing and Running Tasks](https://taskfile.dev/guides/getting-started-workflows/writing-running-tasks) to craft your own Taskfiles.
+- Explore [Platform Constraints](https://taskfile.dev/taskfile_concepts/integration_scalability/platform_support) if targeting multiple OSes.
+- Use [Including and Sharing Taskfiles](https://taskfile.dev/guides/advanced-features-best-practices/including-sharing-taskfiles) for modular automation.
+
+With Task, automation becomes a natural extension of your workflow — empowering you and your team to work smarter and ship faster.

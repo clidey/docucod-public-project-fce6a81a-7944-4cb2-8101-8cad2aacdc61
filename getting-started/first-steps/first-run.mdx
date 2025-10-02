@@ -1,0 +1,178 @@
+---
+title: "Your First Task Run"
+description: "Run your very first automation with Task. This page walks you step-by-step from writing a basic task to executing it from the command line, explaining expected outputs and what success looks like."
+---
+
+# Your First Task Run
+
+Welcome to your first experience running automation with Task! This guide will take you step-by-step through creating a basic Taskfile, running your first task from the command line, and understanding what success looks like. By the end, you'll master how to execute a simple workflow and interpret Task's output confidently.
+
+---
+
+## 1. Prepare Your Taskfile
+
+Task runs workflows defined in a `Taskfile.yml` (or `.yaml`) file placed in your project root.
+
+1. **Create a minimal Taskfile:**
+
+   This file declares tasks, their commands, and optionally dependencies or descriptions.
+
+   Here is a minimal example that defines a basic task called `hello`:
+
+   ```yaml
+   version: '3'
+
+   tasks:
+     hello:
+       desc: "Print a greeting"
+       cmds:
+         - echo 'Hello, Task!'
+   ```
+
+2. **Save this as `Taskfile.yml` in your project directory.**
+
+   - The filename is case-insensitive but `Taskfile.yml` is the default.
+   - Ensure correct indentation and YAML syntax to avoid parsing errors.
+
+<Tip>
+You can generate an initial Taskfile skeleton by running `task --init` in an empty folder; however, crafting your first task manually helps you understand the basics.
+</Tip>
+
+---
+
+## 2. Run Your First Task From the Command Line
+
+With your `Taskfile.yml` ready, it's time to execute your task.
+
+1. **Open a terminal or command prompt at your project's root directory (where `Taskfile.yml` lives).**
+
+2. **Run your task by typing:**
+
+   ```bash
+   task hello
+   ```
+
+   - `task` is the command-line interface.
+   - `hello` is the task name from your Taskfile.
+
+3. **Expected output:**
+
+   You should see Task log the command it's running and the command output:
+
+   ```console
+   > echo 'Hello, Task!'
+   Hello, Task!
+   ```
+
+4. **If your task runs successfully:**
+
+   - The terminal prompt returns without errors.
+   - The output matches your command's expected results.
+
+<Check>
+If you see errors such as "Taskfile not found" or YAML syntax errors, double-check your Taskfile location, name, and formatting.
+</Check>
+
+---
+
+## 3. Understanding What Just Happened
+
+- Task read your `Taskfile.yml` and parsed its tasks.
+- It found the `hello` task and executed the listed shell commands sequentially.
+- Standard output (`Hello, Task!`) was displayed.
+- Tasks can contain multiple commands, dependencies, environment variables, and more.
+
+This simple run confirmed that Task is correctly installed, your Taskfile is structured properly, and the CLI can execute your custom automation.
+
+---
+
+## 4. Enhancing Your First Task
+
+Try adding these enhancements as next steps to deepen your understanding.
+
+1. **Add descriptions for better clarity:**
+
+   ```yaml
+   tasks:
+     hello:
+       desc: "Prints a friendly greeting"
+       cmds:
+         - echo 'Hello, Task!'
+   ```
+
+2. **Create a default task:**
+
+   If you name a task `default`, it will run when you execute `task` without arguments.
+
+   ```yaml
+   tasks:
+     default:
+       desc: "Default task runs hello"
+       cmds:
+         - task: hello
+   ```
+
+3. **Run multiple commands:**
+
+   ```yaml
+   tasks:
+     hello:
+       cmds:
+         - echo 'Starting task...'
+         - echo 'Hello, Task!'
+         - echo 'Task completed.'
+   ```
+
+4. **Try aliases or environment variables** to customize your tasks. All options are documented in the Task docs.
+
+---
+
+## 5. Troubleshooting Common Issues
+
+<AccordionGroup title="Troubleshooting Your First Task Run">
+<Accordion title="Taskfile Not Found or Not Loaded">
+- Make sure your `Taskfile.yml` is in your current working directory.
+- The file must be named `Taskfile.yml`, `Taskfile.yaml`, or supported variants.
+- Run `task --version` to verify Task is installed.
+</Accordion>
+<Accordion title="YAML Syntax Errors">
+- Use a YAML linter or online validator to check your file syntax.
+- Common mistakes: missing indentation, tabs instead of spaces, unquoted strings with special chars.
+</Accordion>
+<Accordion title="Command Not Executing or Empty Output">
+- Verify shell commands are valid in your OS shell environment.
+- Run commands independently in your terminal to confirm.
+</Accordion>
+<Accordion title="Permissions or Environment Variables Not Working">
+- Confirm you have execute permissions.
+- Check environment variables or credentials needed by commands.
+</Accordion>
+</AccordionGroup>
+
+---
+
+## 6. Next Steps
+
+Now that you have confidently run your first Task:
+
+- Explore writing complex Taskfiles with dependencies, variables, and conditional execution.
+- Learn how to use Task's fingerprinting (status checks) to skip unnecessary work.
+- Check out [Basic Configuration & Taskfile Structure](/getting-started/configuration-troubleshooting/configuration-basics) for deeper customization.
+- Try running included Taskfiles or setting task aliases.
+
+<Tip>
+Visit the official docs and GitHub repository for examples, templates, and community tips to accelerate your automation journey.
+</Tip>
+
+---
+
+## References
+
+- [Installation Guide](/getting-started/environment-setup/installation)
+- [Basic Configuration & Taskfile Structure](/getting-started/configuration-troubleshooting/configuration-basics)
+- [Common Workflows](/guides/getting-started-workflows/common-workflows)
+- [Task CLI Reference](https://taskfile.dev/usage/)
+
+---
+
+Congratulations on running your first task with Task! This foundational skill unlocks powerful automation capabilities for your projects.

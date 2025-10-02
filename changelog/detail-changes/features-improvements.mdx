@@ -1,0 +1,158 @@
+---
+title: "New Features & Improvements"
+description: "A clear list of all new capabilities and enhancements delivered in each version, with concise explanations and cross-links to deeper documentation where relevant. This helps users unlock new productivity with every upgrade."
+---
+
+# New Features & Improvements
+
+This page provides a clear and concise list of all new features, enhancements, and improvements introduced in each release of Task. Organized in reverse chronological order, it helps users quickly grasp the value each version adds and how it can improve their automation workflows. Where applicable, references and links to deeper documentation are included to enable further exploration.
+
+---
+
+## Recent Releases: Highlights and Value
+
+### v3.45.4 - 2025-09-17
+
+- **Bug Fixes for Configuration and Autocomplete**
+  - Fixed issues with defining `cache-expiry` in the `.taskrc.yml` configuration file.
+  - Corrected the recursive reading of `.taskrc.yml` files in parent directories.
+  - Resolved autocomplete failures in zsh when working in subfolders.
+
+### v3.45.3 - 2025-09-15
+
+- **Built-in Core Utilities on Windows**
+  Task now bundles common UNIX core utilities (e.g., `cp`, `mv`, `mkdir`) on Windows. This eliminates the need for extra setup for these commands and significantly improves Windows compatibility.
+  - Read the dedicated blog post for detailed guidance: [Windows Core Utilities](https://taskfile.dev/blog/windows-core-utils).
+
+- **New Website Powered By VitePress**
+  Improved documentation experience with a modern framework providing enhanced navigation and faster loading.
+
+- **Nightly Builds Introduced**
+  Users can now access cutting-edge builds before general release, simplifying early testing without building from source.
+
+- **Global Configuration Support**
+  Support was added for global `.taskrc.yml` config files located in `$XDG_CONFIG_HOME/task` or `$HOME`, providing consistent behavior across projects.
+
+- **Expanded `.taskrc.yml` Features and Properties**
+  New configuration settings like `insecure`, `verbose`, `concurrency`, and improved remote features (`offline`, `timeout`, `expiry`) were added.
+  - Note: Offline mode via environment variable is deprecated.
+
+- **Enhanced Task Listing with `--nested` Flag**
+  The `--list --json` output now supports nested task structures, reflecting namespaces and providing a clearer overview.
+
+- **Improved Wildcard Task Support**
+  Wildcards are better logged and integrated with fingerprinting, making dynamic task targeting more robust.
+
+### Package API Updates
+
+- Minimum Go version raised to 1.24 to leverage modern language features and ensure future sustainability.
+
+### Other Noteworthy Updates
+
+- Official release of the GitHub Action `setup-task` for easier integration in CI workflows.
+
+---
+
+### Previous Releases (Summary)
+
+#### v3.44.1 - 2025-07-23
+
+- Internal tasks are no longer suggested when invoking task lists, avoiding confusion.
+- Fixed installation issues for ARM platforms.
+- Corrected fingerprinting behavior when Taskfile paths contain spaces.
+- Reverted a breaking change to `randInt` function.
+- Added new fixture test variables `TEST_NAME` and `TEST_DIR` for enhanced testing fidelity.
+
+#### v3.44.0 - 2025-06-08
+
+- Introduced new template functions: `uuid`, `randInt`, and `randIntN` for easier randomization and unique IDs.
+- Added `CLI_ARGS_LIST`, an array version of arguments passed after `--`, improving script argument handling.
+- Added YAML serialization functions `toYaml` and `fromYaml` for template transformations.
+- Included `task` field in `--list --json` output for richer metadata.
+- Added manual checksum pinning feature on included Taskfiles to improve reliability.
+- Redacted credentials in remote URL outputs for security.
+- Fixed multiple bugs related to task suggestions, directory path handling, and watcher regressions.
+- Dual JSON schema support added for smooth schema evolution.
+
+#### v3.43.x Series - 2025-04
+
+- Stability fixes to special variables and CLI argument typing.
+- Switched watcher backend to `fsnotify` for better performance and lower CPU usage.
+- Made Map Variables generally available to define map variables directly in Taskfiles.
+- Enhanced support for wildcards, includes, caching, and `.taskrc` file recursive discovery.
+
+---
+
+## How to Leverage These Updates
+
+- **For Windows users:** Use built-in core utilities shipped by Task to simplify cross-platform scripting.
+- **For CI/CD workflows:** Leverage nightly builds and official GitHub Action for faster iteration and reliability.
+- **During development:** Utilize wildcard improvements and nested task JSON output to manage complex task hierarchies.
+- **For configuration management:** Adopt the new global `.taskrc.yml` files to share settings across multiple projects.
+
+---
+
+## Related Documentation
+
+- [Taskfile Schema & Structure](https://taskfile.dev/taskfile_concepts/core_architecture/taskfile_schema_concept) – Learn how Taskfiles are structured.
+- [Variables & Templating Guide](https://taskfile.dev/guides/advanced-features-best-practices/variables-and-templating) – Maximize power of template functions and variables.
+- [Including & Sharing Taskfiles](https://taskfile.dev/guides/advanced-features-best-practices/including-sharing-taskfiles) – Modularize your workflows.
+- [Conditional Execution & Preconditions](https://taskfile.dev/guides/advanced-features-best-practices/conditional-execution-preconditions) – Build robust task sequences.
+- [Performance & Parallelism Tips](https://taskfile.dev/guides/advanced-features-best-practices/performance-parallelism) – Run tasks efficiently.
+- [Release Process Overview](https://taskfile.dev/website/src/docs/releasing) – Understand how Task releases are made.
+
+---
+
+## Troubleshooting & Best Practices
+
+- When upgrading, review breaking changes documented in upgrade guides to adapt your Taskfiles.
+- Use the `--list --json --nested` flag to visualize complex task dependencies post update.
+- Verify `.taskrc.yml` syntax and properties when upgrading to newer versions using global config support.
+
+---
+
+## Summary of Main Sections
+
+- Detailed release notes covering new features, bug fixes, and platform improvements.
+- Package API updates to aid developers integrating Task as a library.
+- Guidance on leveraging new capabilities to improve automation and cross-platform compatibility.
+- Cross-links to related concept guides and advanced usage documentation.
+
+---
+
+## Example: Using Built-in Core Utilities on Windows
+
+```sh
+# Without extra setup, you can now run:
+$ task
+# Internally uses built-in `cp`, `mv`, `mkdir` equivalents on Windows
+```
+
+Visit the [blog post on Windows core utilities](https://taskfile.dev/blog/windows-core-utils) for details.
+
+---
+
+# Additional Resources
+
+- [Changelog Main Page](https://taskfile.dev/changelog/release-history/version-timeline) – Full version timeline.
+- [Breaking Changes & Migration Notes](https://taskfile.dev/changelog/upgrade-guides/breaking-changes) – Plan upgrades without disruption.
+- [Upgrade Instructions](https://taskfile.dev/changelog/upgrade-guides/upgrade-instructions) – Step-by-step upgrade guidance.
+
+---
+
+This changelog page is your go-to for understanding how each update unlocks new productivity and ensures smooth evolution of your Task automation.
+
+---
+
+# Navigating Next
+
+Explore related guides or deeper architecture pages for a comprehensive mastery:
+
+- [System Architecture](https://taskfile.dev/overview/architecture-features/system-architecture)
+- [Execution Flow](https://taskfile.dev/taskfile_concepts/core_architecture/execution_flow)
+- [Common Automation Workflows](https://taskfile.dev/guides/getting-started-workflows/common-workflows)
+
+
+---
+
+*End of New Features & Improvements changelog*

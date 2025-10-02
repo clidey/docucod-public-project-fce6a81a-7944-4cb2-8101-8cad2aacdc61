@@ -1,0 +1,174 @@
+---
+title: "Integrations and Ecosystem"
+description: "Explains how Task fits into broader development and CI/CD ecosystems—integrating with shell environments, containerized builds, and existing toolchains. Outlines available integration points, such as configuration file locations, platform abstraction, and invocation from pipelines or IDEs."
+---
+
+# Integrations and Ecosystem
+
+Task is designed to seamlessly fit into your existing development and CI/CD workflows, making automation intuitive, flexible, and extensible. This page details how Task integrates with shell environments, containerized builds, and existing toolchains. It clarifies the integration points available, including configuration file locations, platform abstraction, and invoking Task from pipelines or IDEs.
+
+---
+
+## Why Integrations Matter
+
+Modern development and deployment processes rely on a variety of tools, environments, and infrastructure components. Task serves as a powerful automation backbone that does not replace but complements these systems by offering:
+
+- **Smooth shell interoperability:** Use Task alongside familiar shell environments and scripts without disruption.
+- **Container-friendly behavior:** Easily run Task within container builds or orchestrated environments.
+- **Flexible configuration discovery:** Task automatically locates and merges config files, adapting to your project structure and user environments.
+- **Extensible invocation:** Call Task seamlessly from CI/CD pipelines, IDEs, or other automation tools.
+
+By embracing these integration points, you empower your teams to enhance productivity and streamline complex workflows without friction.
+
+## Configuration File Locations and Precedence
+
+Task's configuration system is built to be both powerful and unobtrusive. It discovers configuration files automatically across multiple directories, merging them in a predictable manner. This enables global, user-specific, and project-scoped settings to coexist harmoniously.
+
+### File Search Order
+
+When Task runs, it searches for configuration files in the following order, applying the highest priority to the earliest matches:
+
+1. **Current directory (or directory specified by `--taskfile` or `--entrypoint` flags)**
+2. **Parent directories up to either the home directory or filesystem root**
+3. **User’s `$HOME` directory**
+4. **`$XDG_CONFIG_HOME/task` directory**
+
+### File Naming Conventions
+
+- Configuration files in the current directory, its parents, and the home directory are named `.taskrc.yml` or `.taskrc.yaml` (note the leading dot).
+- Files in `$XDG_CONFIG_HOME/task` are named without the dot prefix (e.g., `taskrc.yml`).
+
+### Merging Behavior
+
+All discovered config files merge into a unified configuration, with higher priority files overriding lower ones. For example:
+
+```yaml [$XDG_CONFIG_HOME/task/taskrc.yml]
+option_1: foo
+option_2: foo
+option_3: foo
+```
+
+```yaml [$HOME/.taskrc.yml]
+option_1: bar
+option_2: bar
+```
+
+```yaml [$HOME/path/to/project/.taskrc.yml]
+option_1: baz
+```
+
+Final effective config:
+
+```yaml
+option_1: baz   # from project-level config
+option_2: bar   # from user home config
+option_3: foo   # from XDG global config
+```
+
+This layered approach lets you customize Task behavior globally, per user, or per project without conflict.
+
+## Platform Abstraction and Environment Compatibility
+
+Task respects the underlying platform and environment to ensure commands run correctly and only when appropriate:
+
+- **Platform-specific tasks and commands:** You can limit tasks or individual commands to run on specific operating systems (e.g., Windows, macOS, Linux) and architectures (e.g., amd64, arm64). This ensures scripts only execute where valid, preventing errors in heterogeneous environments.
+
+- **Environment variable and shell integration:** Task fully supports environment variables and the use of `.env` files at the global or task level. Environment variables can be loaded from multiple dotenv files, making it effortless to combine system variables, project secrets, or runtime configs.
+
+- **Shell interpolation within Taskfiles:** You can embed shell commands as dynamic variables or use shell scripts directly within task commands. This blends native shell behavior with Task's automation capabilities.
+
+## Invocation from Pipelines and IDEs
+
+Task is designed with CI/CD and IDE workflows in mind to maximize automation efficiency:
+
+- **Command-line interface (CLI):** Task exposes a straightforward CLI that can be called directly in pipeline scripts, build containers, or IDE terminal windows.
+
+- **Passing arguments and presets:** It supports passing variables, wildcards, and CLI arguments to adapt execution dynamically for different environments, branches, or deployment targets.
+
+- **Global Taskfiles for system-wide automation:** Using the `--global` flag, Task can run user-level Taskfiles from anywhere, facilitating system-level utilities or shared commands.
+
+- **Output customization:** Output modes such as interleaved, grouped, or prefixed tailor logs for CI systems and IDE consoles.
+
+- **Watch mode and interactive tasks:** Continuous watching for file changes and support for interactive CLI tools ease development and debugging.
+
+### Example: Task in a CI Pipeline
+
+```yaml
+version: '3'
+tasks:
+  build:
+    cmds:
+      - go build ./...
+
+  test:
+    deps: [build]
+    cmds:
+      - go test ./...
+```
+
+You can invoke these tasks in a CI step:
+
+```bash
+task test --verbose
+```
+
+This triggers the dependency automatically, ensuring your build and tests run efficiently.
+
+## Key Integration Points Summary
+
+| Integration Aspect               | Details                                           |
+|---------------------------------|---------------------------------------------------|
+| Configuration Discovery         | Auto-load and merge `.taskrc.yml` files from multiple locations for flexible scoping|
+| Platform Abstraction            | Restrict tasks and commands by OS and architecture for compatibility|
+| Environment Variable Support    | Robust dotenv file loading, task-level overrides, and dynamic shell variable interpolation |
+| Invocation Flexibility          | CLI arguments, global Taskfiles, and environment integration enable usage in CI, containers, and IDEs|
+| Output Customization            | Select output modes that work best for terminals, CI grouping, and debugging|
+
+## Best Practices for Ecosystem Integration
+
+- **Keep global Taskfiles minimal:** Use them for reusable utilities but avoid heavy dependencies.
+- **Use environment variables and dotenv files wisely:** Separate secrets and environment-specific values neatly.
+- **Leverage platform constraints:** Prevent unnecessary errors by targeting task execution appropriately.
+- **Invoke from pipelines using CLI args:** Pass variables through CLI arguments, wildcards, or environment variables for flexible automation.
+- **Prefer included Taskfiles for modularity:** Break complex automation into reusable components to share among projects.
+
+<Info>
+Integrations are where Task shines by fitting organically into your existing systems. Understanding these integration points helps you maximize Task's impact on your automation workflows.
+</Info>
+
+## Troubleshooting Common Integration Issues
+
+### Taskfile Not Found in CI Environment
+
+- Verify the working directory or use `--taskfile` with an explicit path.
+- Use `--global` if running user-level Taskfiles.
+
+### Platform-Specific Tasks Not Running
+
+- Confirm the correct `platforms:` specification matching the target environment.
+- Remember Tasks and commands are skipped silently if platform mismatch occurs.
+
+### Environment Variables Not Loaded
+
+- Check dotenv file paths; remember they can be configured globally or per-task.
+- Confirm `env:` variables do not unintentionally overwrite dotenv variables unless intended.
+
+### Output Too Noisy or Missing Logs in CI
+
+- Adjust `output` mode between `interleaved`, `group`, and `prefixed` based on your CI runner's capabilities.
+
+### Interactive Tasks Fail in Non-terminal Environments
+
+- Use `interactive: true` carefully.
+- Consider disabling interactive prompts or automate responses using the `--yes` flag.
+
+## Next Steps
+
+Explore the following documentation to deepen your understanding and master integration workflows:
+
+- [Configuration Reference](/reference/config/): Details on config file options and environment management.
+- [Integrating Task with CI/CD](/guides/integration-real-world-examples/integrating-with-ci): How to use Task in pipeline workflows.
+- [Task and Shell Scripting](/guides/integration-real-world-examples/shell-scripting-interop): Best practices for shell interaction.
+- [Using Variables & Templating](/guides/advanced-features-best-practices/variables-and-templating): Dynamically control your tasks through variables.
+
+Embrace Task as the bridge linking your automation ecosystem—powerful yet unobtrusive, expressive yet approachable.

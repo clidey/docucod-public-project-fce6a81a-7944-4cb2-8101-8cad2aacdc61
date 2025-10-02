@@ -1,0 +1,298 @@
+---
+title: "Conditional Execution & Preconditions"
+description: "Guide to using preconditions and conditionals, enabling tasks to check requirements, platform compatibility, or user input before proceeding. Excellent for robust, cross-platform workflows."
+---
+
+# Conditional Execution & Preconditions
+
+This guide explains how to use preconditions and conditional checks in Taskfiles to build robust, reliable workflows that verify required conditions, platform support, or user input before executing tasks. Leveraging these features ensures your automation remains safe, predictable, and cross-platform compatible.
+
+---
+
+## 1. Understanding Preconditions & Conditional Execution
+
+Preconditions in Task act as gatekeepers that must succeed before a task and its dependencies can run. Unlike status checks that skip tasks when they are already up-to-date, preconditions stop the execution outright if any required condition is not met, preventing unnecessary or harmful task runs.
+
+Typical uses include verifying the existence of files, ensuring environment variables or variable values are correct, checking platform compatibility, or requiring user confirmation before execution.
+
+### What Preconditions Do
+
+- Run shell commands or tests that must complete successfully (exit status 0).
+- Halt the task and all depending tasks if any precondition fails.
+- Display user-friendly messages explaining why execution stopped.
+- Support cross-platform scripting by combining with platform restrictions.
+
+### How Conditional Execution Helps
+
+- Run commands only when appropriate based on environment variables or platforms.
+- Avoid errors before they happen by checking necessary resources upfront.
+- Add clear explanations to help users resolve unmet conditions.
+
+---
+
+## 2. Prerequisites
+
+Before adding preconditions, ensure:
+
+- You have a valid Taskfile with version 3 defined.
+- Basic understanding of writing tasks, commands (`cmds`), dependencies (`deps`), and variables.
+- Familiarity with shell commands (`sh`) you want to use in conditions.
+
+Refer to the [Basic Configuration & Taskfile Structure](https://taskfile.dev/docs/getting-started/configuration-troubleshooting/configuration-basics) for task definitions and the [Writing and Running Tasks guide](https://taskfile.dev/docs/guides/getting-started-workflows/writing-running-tasks) for core usage.
+
+---
+
+## 3. Defining Preconditions in Your Taskfile
+
+Use the `preconditions:` key within a task to list the required shell commands or tests that must pass before the task executes.
+
+### Simple Syntax
+
+Each precondition can be expressed as a shell command string:
+
+```yaml
+version: '3'
+tasks:
+  foo:
+    preconditions:
+      - test -f foo.txt
+    cmds:
+      - echo "File foo.txt exists, running task"
+```
+
+Here, the task `foo` will run its commands only if the file `foo.txt` exists.
+
+### Expanded Syntax with Failure Messages
+
+Use the `sh:` and `msg:` keys to define a command and customize failure messages for clarity:
+
+```yaml
+version: '3'
+tasks:
+  impossible:
+    preconditions:
+      - sh: '[ 1 = 0 ]'
+        msg: "One doesn't equal zero, halting the task"
+    cmds:
+      - echo "Won't get here"
+```
+
+If the shell test fails, the task will print the message and exit without running commands.
+
+### Behavior on Failure
+
+- When a precondition fails, Task outputs the failure message defined by `msg` or a default.
+- The task and all dependent tasks will not run unless the CLI option `--force` is used.
+
+
+---
+
+## 4. Practical Usage and Examples
+
+### Example: File Existence Check
+
+Ensure a necessary config file is present before running a deploy task.
+
+```yaml
+version: '3'
+tasks:
+  deploy:
+    preconditions:
+      - test -f .env
+    cmds:
+      - echo "Deploying app using .env"
+```
+
+### Example: Platform-specific Execution
+
+Combine preconditions with `platforms:` to run only on compatible OS/architecture.
+
+```yaml
+version: '3'
+tasks:
+  build-windows:
+    platforms: [windows]
+    preconditions:
+      - sh: 'echo Running on Windows platform'
+    cmds:
+      - echo "Building Windows binary"
+```
+
+### Example: Chain Failing Preconditions with Dependencies
+
+A dependency task with failing precondition causes the parent task to fail.
+
+```yaml
+version: '3'
+tasks:
+  check-foo-file:
+    preconditions:
+      - test -f foo.txt
+  main-task:
+    deps: [check-foo-file]
+    cmds:
+      - echo "This will NOT run if foo.txt missing"
+```
+
+---
+
+## 5. Customizing Preconditions
+
+### Setting Clear Failure Messages
+
+Always define `msg` for preconditions to help users quickly understand what failed:
+
+```yaml
+preconditions:
+  - sh: '[ -n "$MY_VAR" ]'
+    msg: "Required env var MY_VAR is not set or empty"
+```
+
+### Using Multiple Preconditions
+
+List multiple preconditions to require several conditions:
+
+```yaml
+preconditions:
+  - test -f config.yml
+  - sh: '[ $(uname) = "Linux" ]'
+    msg: "Must be running on Linux"
+```
+
+The task runs only if all preconditions are met.
+
+---
+
+## 6. Command-Level Conditional Execution
+
+In addition to task-level preconditions, individual commands or dependencies can be platform-restricted using `platforms:` keys.
+
+```yaml
+tasks:
+  build:
+    cmds:
+      - cmd: echo 'Building for Windows'
+        platforms: [windows]
+      - cmd: echo 'Building for Linux'
+        platforms: [linux]
+```
+
+This helps tailor execution precisely without failing the whole task.
+
+---
+
+## 7. Handling Variables & Requires
+
+Although preconditions are great guards, Task also offers the `requires` keyword to enforce mandatory variables before a task runs. This complements preconditions used for environmental or shell-based checks.
+
+```yaml
+tasks:
+  deploy:
+    requires:
+      vars:
+        - PROJECT
+        - ENV
+    cmds:
+      - echo "Deploying to {{.ENV}} for project {{.PROJECT}}"
+```
+
+If required variables are missing, Task throws an error before running commands.
+
+---
+
+## 8. Troubleshooting Preconditions
+
+### Common Issues
+
+- **Precondition fails even though the expected condition is true:**
+  - Verify shell syntax is compatible with the shell interpreter Task uses.
+  - Confirm file or environment variable paths are correct relative to the task directory.
+
+- **Ambiguous failure messages:**
+  - Always define `msg` to explain what the precondition checks.
+
+- **Precondition fails on different platforms:**
+  - Use platform-specific tasks or commands to isolate incompatible conditions.
+
+- **Task fails but you want it to proceed anyway:**
+  - Use `--force` CLI option to override precondition check.
+
+### Tips
+
+- Test precondition commands separately in your shell before including them.
+- Use simple and explicit checks.
+- Combine preconditions with platform restrictions for robust multi-OS workflows.
+
+---
+
+## 9. Summary and Best Practices
+
+- Use preconditions to prevent task execution when necessary environment or files are missing.
+- Always provide user-friendly failure messages using `msg`.
+- Combine preconditions with platform restrictions to build cross-platform compatible tasks.
+- Use `requires` to ensure mandatory variables are set.
+- Test conditions independently before integrating into Taskfiles.
+- Remember failing preconditions stop dependencies and downstream tasks.
+- Consider using `--force` cautiously to bypass precondition checks when needed.
+
+---
+
+## 10. Next Steps
+
+- Learn about [Variables & Templating](https://taskfile.dev/docs/guides/advanced-features-best-practices/variables-and-templating) to dynamically control preconditions.
+- Explore [Platform Constraints and Multi-Platform Builds](https://taskfile.dev/docs/concepts/integration_scalability/platform_support) for advanced execution control.
+- Review [Writing and Running Tasks](https://taskfile.dev/docs/guides/getting-started-workflows/writing-running-tasks) to combine preconditions with task dependencies and commands.
+
+---
+
+## Appendix: Example Taskfile with Preconditions and Platform Restrictions
+
+```yaml
+version: '3'
+tasks:
+  setup-dev-env:
+    preconditions:
+      - test -f .env
+      - sh: '[ "$USER" != "" ]'
+        msg: "USER environment variable must be set"
+    cmds:
+      - echo "Setting up development environment"
+
+  build-windows:
+    platforms: [windows]
+    preconditions:
+      - sh: 'ver'
+        msg: "Not running on Windows PowerShell"
+    cmds:
+      - echo "Building Windows executable"
+
+  build-linux:
+    platforms: [linux]
+    preconditions:
+      - sh: 'uname -s | grep -q Linux'
+        msg: "Not running on Linux"
+    cmds:
+      - echo "Building Linux executable"
+
+  deploy:
+    deps: [build-windows, build-linux]
+    preconditions:
+      - test -f deploy.key
+      - sh: '[ "$ENV" = "prod" ]'
+        msg: "ENV variable must be 'prod' for deployment"
+    cmds:
+      - echo "Deploying to production"
+```
+
+This example shows how preconditions add safety checks and platform boundaries to your automation.
+
+---
+
+## References
+
+- [Basic Configuration & Taskfile Structure](https://taskfile.dev/docs/getting-started/configuration-troubleshooting/configuration-basics)
+- [Writing and Running Tasks](https://taskfile.dev/docs/guides/getting-started-workflows/writing-running-tasks)
+- [Variables & Templating](https://taskfile.dev/docs/guides/advanced-features-best-practices/variables-and-templating)
+- [Platform Support](https://taskfile.dev/docs/concepts/integration_scalability/platform_support)
+
+---

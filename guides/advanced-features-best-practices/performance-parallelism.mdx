@@ -1,0 +1,276 @@
+---
+title: "Performance & Parallelism Tips"
+description: "Practical techniques for speeding up automation: running tasks in parallel, optimizing dependency graphs, reducing unnecessary executions, and using fingerprint-based caching features."
+---
+
+# Performance & Parallelism Tips
+
+Unlock the full potential of your automation with Task by optimizing task execution speed and resource use. This guide walks you through practical techniques for running tasks concurrently, efficiently managing dependencies, minimizing unnecessary runs, and leveraging Task's fingerprinting features to cache results. You will learn how to transform your Taskfiles and use CLI options to significantly speed up your workflows while retaining reliability.
+
+---
+
+## 1. Understanding Task Execution Flow
+
+Before diving into performance tactics, it’s important to understand how Task executes tasks:
+
+- When running a task, all dependencies are resolved recursively.
+- Tasks can be run sequentially or in parallel.
+- Each task execution respects platform constraints and preconditions.
+- Fingerprinting and up-to-date checks determine if tasks need to re-run.
+
+Optimizing at each of these points can cut down runtime dramatically.
+
+---
+
+## 2. Run Multiple Tasks in Parallel
+
+### Why Run Tasks in Parallel?
+
+Running independent tasks simultaneously uses your CPU cores efficiently, reducing total build or automation time significantly.
+
+### How to Enable Parallel Execution
+
+- Use the `--parallel` CLI flag (`task --parallel <tasks>`) when invoking multiple tasks.
+- Combine with the `--concurrency` flag (`-C`) to limit maximum simultaneous tasks.
+
+Example:
+
+```bash
+# Run tasks 'build' and 'test' concurrently with maximum 4 jobs at once
+task --parallel --concurrency 4 build test
+```
+
+### Best Practices
+
+- Ensure tasks do not write to the same files or interfere with each other.
+- Use dependency declarations (`deps`) to enforce order when necessary.
+
+### Verifying Parallel Execution
+
+- Verbose output (`-v`) shows when tasks start and finish in parallel.
+
+---
+
+## 3. Optimize Dependency Graphs
+
+Complex task dependencies can create bottlenecks. Simplifying and structuring these graphs helps parallelism and prevents redundant runs.
+
+### Tips to Optimize Dependencies
+
+- **Avoid deep or cyclic dependencies:** Use `MaximumTaskCall` protection to prevent infinite loops caused by cycles.
+- **Flatten dependencies:** Use include namespaces wisely and avoid naming conflicts.
+- **Minimize shared dependencies:** Tasks depending on the same heavy tasks might cause duplicate work.
+
+Example of dependency optimization:
+
+```yaml
+tasks:
+  build:
+    deps:
+      - prepare
+      - compile
+  prepare:
+    cmds:
+      - echo "Preparing build environment"
+  compile:
+    cmds:
+      - echo "Compiling source"
+```
+
+Here, `prepare` and `compile` run sequentially, but parallel grouping is possible when appropriate.
+
+---
+
+## 4. Leveraging Fingerprinting and Up-to-Date Checks
+
+Fingerprinting lets Task skip running tasks whose inputs and outputs have not changed.
+
+### How Fingerprinting Works
+
+- Task fingerprints are computed based on:
+  - Task sources (`sources` glob patterns)
+  - Task outputs (`generates` pattern)
+  - Command changes
+  - Relevant variables
+- When a fingerprint matches previous runs, Task skips execution unless forced.
+
+### Enabling and Using Fingerprinting
+
+- Add `generates` to your tasks to specify output files.
+- Use `sources` to specify files that affect the task’s output fingerprint.
+- Use the built-in statuses in CI or automated runs (`--status` flag) to validate up-to-date state.
+
+Example:
+
+```yaml
+tasks:
+  build:
+    cmds:
+      - go build -o myapp
+    sources:
+      - "**/*.go"
+    generates:
+      - myapp
+```
+
+### Forcing Execution
+
+- Use `--force` (`-f`) to run a task even if it is considered up-to-date.
+
+### Best Practices
+
+- Specify all relevant source files to prevent stale skipping.
+- Avoid overbroad `sources` globs to prevent unnecessary reruns.
+
+---
+
+## 5. Minimizing Unnecessary Executions
+
+### Conditional Execution with Preconditions
+
+- Use `preconditions` in tasks to add checks (e.g., environment readiness) before running commands.
+- If preconditions fail, Task skips the task quickly.
+
+Example:
+
+```yaml
+tasks:
+  deploy:
+    preconditions:
+      - sh: "[ $(git status --porcelain | wc -l) -eq 0 ]"
+        msg: "Working directory must be clean before deploying"
+    cmds:
+      - ./deploy.sh
+```
+
+### Prompt Handling
+
+- Avoid unnecessary prompt delays with `--yes` (`-y`) to auto-accept.
+
+### Output Grouping and Silent Mode
+
+- Use `--silent` (`-s`) to suppress output when you only care about success.
+- Use grouped output for better readability in parallel runs.
+
+---
+
+## 6. Efficient Use of CLI Flags for Performance
+
+| Flag               | Purpose                                   |
+|--------------------|-------------------------------------------|
+| `--parallel` (`-p`)  | Run provided tasks in parallel            |
+| `--concurrency` (`-C`) | Limit parallel task execution limit       |
+| `--force` (`-f`)      | Force tasks to run regardless of up-to-date checks |
+| `--dry` (`-n`)        | Compile but do not execute tasks           |
+| `--silent` (`-s`)     | Suppress output                            |
+| `--watch` (`-w`)      | Automatically rerun tasks on file changes  |
+
+### Example: Fast Development Loop
+
+```bash
+# Run tests in parallel watching file changes, verbose output
+task test --parallel --watch -v
+```
+
+### Example: CI Cache Validation
+
+```bash
+# Check if tasks are up to date, exit non-zero if not
+task --status
+```
+
+---
+
+## 7. Practical Tips & Common Pitfalls
+
+### Tips
+
+- Use `generates` and fingerprinting to skip expensive builds.
+- Run unrelated tasks in parallel to shorten overall runtime.
+- Limit concurrency on machines with fewer cores to avoid thrashing.
+- Organize Taskfiles modularly and avoid unnecessary nested includes.
+
+### Pitfalls to Avoid
+
+- Running tasks in parallel when they depend on the same files causing conflicts.
+- Overly broad `sources` causing frequent unnecessary reruns.
+- Forgetting to define `generates` outputs for fingerprinting.
+- Including cycles in Taskfiles causing infinite loops.
+
+---
+
+## 8. Troubleshooting Performance Issues
+
+### Symptoms and Solutions
+
+- **Tasks never skip (run every time):** Check if you defined `generates` and `sources` properly.
+- **Tasks fail silently in parallel runs:** Verify no conflicting output paths or race conditions.
+- **Watch mode not reacting timely:** Adjust polling interval with CLI `--interval` flag or Taskfile's `interval`.
+- **Infinite loops or maximum task call exceeded:** Inspect for cyclic dependencies.
+
+Use verbose logging (`-v`) to diagnose timings and skipped tasks.
+
+---
+
+## 9. Next Steps & Related Reading
+
+- Explore [Common Automation Workflows](/guides/getting-started-workflows/common-workflows) for typical parallel task usages.
+- Learn about [Variables & Templating](/guides/advanced-features-best-practices/variables-and-templating) to dynamically control task execution.
+- Consult [Conditional Execution & Preconditions](/guides/advanced-features-best-practices/conditional-execution-preconditions) for advanced task flow control.
+- Review [System Architecture](/overview/architecture-features/system-architecture) to understand underlying performance mechanisms.
+
+---
+
+This guide arms you with actionable insights and best practices to harness parallelism, reduce unnecessary executions, and sustainably speed up your Task automation.
+
+
+---
+
+<AccordionGroup title="Quick Reference">
+<Accordion title="Enable Parallel Execution">
+Run multiple tasks concurrently using the CLI flags:
+
+```bash
+task --parallel --concurrency 4 build test lint
+```
+</Accordion>
+<Accordion title="Define Generates and Sources">
+Specify output and input files for efficient fingerprinting:
+
+```yaml
+tasks:
+  build:
+    sources:
+      - "src/**/*"
+    generates:
+      - bin/app
+    cmds:
+      - go build -o bin/app
+```
+</Accordion>
+<Accordion title="Handle Preconditions">
+Use precondition checks to skip tasks early:
+
+```yaml
+tasks:
+  deploy:
+    preconditions:
+      - sh: '[ -z "$(git status --porcelain)" ]'
+        msg: "Clean git tree required."
+```
+</Accordion>
+<Accordion title="Force Task Execution">
+Force re-running tasks ignoring fingerprints:
+
+```bash
+task build --force
+```
+</Accordion>
+<Accordion title="Watch for Changes">
+Automatically re-run tasks when sources change:
+
+```bash
+task build --watch
+```
+</Accordion>
+</AccordionGroup>

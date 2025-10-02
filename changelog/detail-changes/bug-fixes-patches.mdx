@@ -1,0 +1,111 @@
+---
+title: "Bug Fixes & Patches"
+description: "List and describe bug fixes, maintenance patches, and minor corrections made in every release. This keeps users informed about resolved issues, stability improvements, and regressed or reintroduced bugs."
+---
+
+# Bug Fixes & Patches
+
+This page delivers a comprehensive overview of bug fixes, maintenance patches, and minor corrections introduced in each Task release. It equips users with clear information about resolved issues, stability enhancements, and any regressed or reintroduced bugs, so they can keep their automation workflows reliable and up to date.
+
+---
+
+## Understanding the Impact of Bug Fixes
+
+Bug fixes and patches are the unsung heroes of maintaining a stable and dependable automation environment. This documentation focuses on what problems were identified, how they manifest during user workflows, and how each release resolves them. It empowers you to anticipate fixes that might alleviate blockers or unexpected behaviors in your task automation.
+
+
+## How to Use This Bug Fixes & Patches Documentation
+
+- **Track Resolved Issues:** See a detailed list of bugs addressed to verify if your environment’s problems are remedied.
+- **Validate Stability Improvements:** Understand what has been patched to enhance reliability and performance.
+- **Identify Regressions or Reintroduced Bugs:** Review notes about bugs that were reintroduced or fixed again.
+- **Plan Upgrades with Confidence:** Knowing the fixes helps you decide when and how to upgrade safely.
+
+
+## Typical Bug Fix Categories Covered
+
+- **Task Execution Flaws:** Fixes related to task running order, concurrency, or dependencies.
+- **Templating and Variables:** Corrections to variable interpolation, special variables, and environment integrations.
+- **Platform Compatibility:** Address issues specific to Windows, macOS, Linux, or ARM architectures.
+- **Watcher and File Monitoring:** Improvements in file watch performance and event handling.
+- **Completion and CLI Behavior:** Fixes for shell completion scripts, CLI flags, and output consistency.
+- **Fingerprinting and Up-to-date Checks:** Bug fixes improving task skipping logic and checksum/timestamp handling.
+
+
+## Selected Bug Fix Highlights from Recent Releases
+
+### v3.45.4 (2025-09-17)
+- Addressed a bug preventing `cache-expiry` from being defined in `.taskrc.yml`, improving cache management (#2423).
+- Fixed issue where `.taskrc.yml` files located in parent directories were not being correctly loaded, restoring expected configuration inheritance (#2424).
+- Corrected autocomplete malfunction for subfolders on zsh shells, ensuring seamless task completion (#2425).
+
+### v3.45.3 (2025-09-15)
+- Resolved regressions causing panic when an empty hash variable was declared, preserving task stability (#2416, #2417).
+- Fixed handling of wildcards in tasks to properly log and fingerprint wildcard parameters (#1808, #1795).
+
+### v3.44.1 (2025-07-23)
+- Ensured internal tasks are hidden from suggestions as they are uncallable, reducing clutter in task lists (#2309, #2323).
+- Patched install script issues on certain ARM platforms, improving installation success rates (#1516, #2291).
+
+### v3.43.x Series
+- Fixed watcher migration bugs to `fsnotify` improving CPU usage and event handling quality (#2048).
+- Reverted changes that affected certain special variable behaviors, restoring backward compatibility (#2113, #2186).
+
+### v3.40.x Series
+- Fixed a critical bug where multiple remote includes caused prompt flooding with no waiting for user input (#1832, #1833).
+- Patched variable handling bugs involving dynamic variables and dotenv files (#1232, #1810).
+
+### v3.35.0 - v3.39.2
+- Several fixes were introduced for watch mode, prompting regressions, and template rendering errors in dynamic variables (#1657, #1803, #1818).
+- Fixes related to special variables and environment variable resolution provided more predictable behavior (#630, #1869).
+
+
+## Best Practices for Managing Bug Fix Updates
+
+- **Review Changelogs Regularly:** Before upgrading, check this page to understand fixed issues relevant to your workflows.
+- **Test in Staging:** Apply the latest patches in controlled environments to catch regressions early.
+- **Keep Task Up-to-Date:** Frequent updates reduce exposure to known bugs and benefit from ongoing stability improvements.
+- **Report Persistent Issues:** If a fixed bug recurs or you encounter new issues, contribute feedback to maintainers.
+
+
+## Troubleshooting Common Bug Symptoms
+
+- Unexpected task failures or silent skips — Check for fixes related to fingerprinting and conditional execution.
+- Incorrect variable values or template errors — Look for recent fixes around variable handling and dynamic evaluation.
+- Task list anomalies or completion issues — Review bug patches for CLI flags and shell integration.
+- Performance degradation during file watching — Investigate watcher-related fixes.
+
+If you encounter unexpected behavior after updating, verify if it relates to a regression detailed here and consider rolling back or reporting it.
+
+
+## Related Documentation
+
+- For detailed feature changes and enhancements, see [New Features & Improvements](./features-improvements).
+- To understand migration impact due to bug fixes, consult [Breaking Changes & Migration Notes](./breaking-changes).
+- Learn about ongoing release processes in [Releasing](../../../website/src/docs/releasing.md).
+- For real-world user workflows impacted by bug fixes, explore [Common Automation Workflows](../../../guides/getting-started-workflows/common-workflows).
+
+
+## Summary
+Bug fixes and patches ensure Task remains robust and reliable. This documentation documents all such changes in a user-focused manner to help you confidently resolve issues and maintain stable automation pipelines.
+
+---
+
+### Example Bug Fix Entry Format (for reference)
+
+```markdown
+## v<version> - <release-date>
+
+- Description of the bug fix, what issue it addresses, and how it improves user experience or resolves a pain point.
+- Reference to issue or pull request numbers for context.
+```
+
+
+---
+
+Your continuous investment in monitoring and understanding these bug fixes will secure smooth and predictable automation with Task.
+
+
+---
+
+_Last updated: The most recent version entries are listed first._
