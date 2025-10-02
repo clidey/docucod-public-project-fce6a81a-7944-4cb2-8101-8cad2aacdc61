@@ -1,0 +1,219 @@
+---
+title: "Troubleshooting Taskfile Syntax & Structure"
+description: "Answers common questions about writing, formatting, and validating Taskfiles, including YAML syntax, supported schema versions, and debugging malformed tasks."
+---
+
+# Troubleshooting Taskfile Syntax & Structure
+
+This FAQ helps you diagnose and resolve common issues related to writing, formatting, and validating Taskfiles. Whether you encounter YAML syntax errors, schema version mismatches, or malformed tasks, this guide provides straightforward explanations and actionable solutions.
+
+---
+
+## 1. Common Questions
+
+### 1.1 Why am I getting errors when parsing my Taskfile?
+Errors during parsing usually stem from incorrect YAML syntax or invalid Taskfile structure. Common mistakes include:
+- Incorrect indentation
+- Using unsupported keys or data types
+- Mixing shortcut syntax with full task syntax incorrectly
+
+**How to fix:**
+- Validate your YAML file with online tools or YAML linters.
+- Refer to [Basic Configuration & Taskfile Structure](/getting-started/configuration-troubleshooting/configuration-basics) for correct Taskfile formatting.
+- Use `task --dry` mode to simulate Taskfile parsing without execution.
+
+### 1.2 What are the supported Taskfile schema versions?
+Task supports schema version `3` currently. Your Taskfile YAML must declare this version like:
+
+```yaml
+version: '3'
+```
+
+If the version is missing or invalid, Task will not run the Taskfile and show a schema version check error.
+
+### 1.3 My included Taskfile has dotenv settings but I get errors. Why?
+Included Taskfiles are not allowed to declare `dotenv` keys. Dotenv settings must be declared only in the main Taskfile.
+
+### 1.4 Why am I seeing errors about conflicting task names when flattening includes?
+When you `flatten` an included Taskfile, tasks become available without a namespace. If two tasks share the same name, Task throws an error due to naming conflicts.
+
+**Resolution:**
+- Use namespaces when including Taskfiles without flattening.
+- Use the `excludes` option to avoid including specific tasks.
+
+### 1.5 What causes "task cannot have both cmd and cmds" error?
+This happens if you specify both a singular `cmd:` and plural `cmds:` keys inside a task, which is not allowed.
+
+**Fix:** Use either `cmd:` for a single command or `cmds:` for a list of commands, but not both.
+
+### 1.6 How do I interpret error messages that include line and column numbers?
+Task includes detailed error messages that specify the file location and exact line and column where parsing failed.
+
+Use these details to open your Taskfile in an editor and fix the syntax or structural errors at the indicated position.
+
+---
+
+## 2. Quick Answers
+
+- **Taskfile not found:** Task did not find a Taskfile in your current directory or parent directories. Run `task --init` to create one or place a valid Taskfile in your project root.
+
+- **Schema version missing or invalid:** Add `version: '3'` to the root of your Taskfile.
+
+- **Include cycles detected:** Your Taskfiles include each other recursively. Remove circular includes to resolve.
+
+- **Checksum mismatch:** Included Taskfile’s checksum does not match the expected checksum. Update references or re-download.
+
+- **Dotenv in included Taskfile:** Move dotenv entries to the main Taskfile as included files cannot have dotenv declarations.
+
+- **Namespace conflicts when flattening includes:** Use namespaces or exclude conflicting tasks.
+
+- **YAML type errors:** Check for invalid data types at the indicated line, such as mixing strings and lists.
+
+---
+
+## 3. Common Issues & Gotchas
+
+### 3.1 YAML Parsing Errors
+See if errors mention terms such as `cannot unmarshal` or `line X: invalid keys`. These indicate:
+- Invalid key names or unsupported structures.
+- Mixing scalar and map syntax incorrectly.
+- Incorrect indentation or list formatting.
+
+**Tips:**
+- Align your keys properly.
+- Follow the example Taskfiles from [getting-started/configuration-troubleshooting/configuration-basics].
+- Avoid mixing shortcut and full syntaxes for commands or tasks.
+
+### 3.2 Included Taskfile Version Mismatch
+Included Taskfiles must use the same schema version as the main Taskfile. Mixing versions leads to errors during merging.
+
+### 3.3 Circular Includes
+If you include Taskfiles in a cycle, Task detects an `include cycle` and fails. Check your includes graph for cycles and eliminate them.
+
+### 3.4 Exclusion and Flattening Pitfalls
+When flattening includes, conflicting task names cause errors. Use the `excludes` option carefully to avoid unintentionally hiding tasks dependencies rely on.
+
+### 3.5 Runtime Errors from Incorrect `requires` or `preconditions`
+If variables are not set or preconditions fail, Task prevents task execution. Returning clear error messages is expected.
+
+---
+
+## 4. Troubleshooting Procedures
+
+<Steps>
+<Step title="Verify Taskfile Existence and Location">
+Ensure your Taskfile exists in your current directory or a parent directory. Use `task --taskfile path/to/Taskfile.yml` if it’s elsewhere.
+</Step>
+<Step title="Validate YAML Syntax">
+Run your Taskfile through a YAML validator to catch formatting issues affecting parsing.
+</Step>
+<Step title="Check Schema Version">
+Verify that the `version` key at the root of the Taskfile is set to '3'. Mismatched or missing versions cause errors.
+</Step>
+<Step title="Inspect Include Directives">
+Ensure included Taskfiles:
+- Exist and are accessible
+- Use the same schema version
+- Do not contain dotenv declarations
+- Do not form circular dependencies
+</Step>
+<Step title="Avoid Conflicting Task Names in Flattened Includes">
+If flattening included tasks, verify unique task names or use namespace prefixes.
+</Step>
+<Step title="Resolve YAML Type and Syntax Errors">
+For errors like "cannot unmarshal" or invalid keys:
+- Confirm correct use of `cmd` vs `cmds`
+- Do not mix scalar and mapping nodes improperly
+- Follow syntax examples in the [Basic Configuration] guide
+</Step>
+<Step title="Use `task --dry` to Check Load Without Execution">
+Run `task --dry` to let Task parse and display tasks without running. This helps isolate syntax issues.
+</Step>
+</Steps>
+
+---
+
+## 5. Examples of Common Syntax Errors
+
+### Conflicting `cmd` and `cmds` keys in a single task
+```yaml
+tasks:
+  build:
+    cmd: echo "Hello"
+    cmds:
+      - echo "World"
+```
+**Fix:** Use either `cmd` or `cmds`, not both.
+
+### Using dotenv inside included Taskfiles (not supported)
+```yaml
+includes:
+  common:
+    taskfile: ./common/Taskfile.yml
+
+# Inside common/Taskfile.yml
+dotenv: ['.env']  # Causes error
+```
+**Fix:** Move `dotenv` to the main Taskfile outside of includes.
+
+### Missing version key
+```yaml
+tasks:
+  foo:
+    cmds:
+      - echo 'bar'
+```
+**Fix:** Add `version: '3'` at the top level.
+
+---
+
+## 6. Error Messages & Meaning
+
+| Error Type                       | Description                                                                                          | Suggested Action                                                   |
+|---------------------------------|--------------------------------------------------------------------------------------------------|------------------------------------------------------------------|
+| `TaskfileNotFoundError`          | Taskfile not found in current dir or parents                                                       | Place a Taskfile, or use `--taskfile` flag                       |
+| `TaskfileInvalidError`           | Syntax or parsing error in Taskfile                                                              | Fix YAML syntax or invalid keys                                  |
+| `TaskfileCycleError`             | Include cycle detected between Taskfiles                                                          | Remove circular `includes`                                       |
+| `TaskfileVersionCheckError`      | Missing or unsupported schema version                                                             | Add or correct `version: '3'` key                                |
+| `ErrIncludedTaskfilesCantHaveDotenvs` | Dotenv used inside included Taskfiles (not allowed)                                             | Move dotenv to main Taskfile                                      |
+| `TaskfileDoesNotMatchChecksum`  | Checksum mismatch in included Taskfile                                                            | Update checksum or Taskfile, or redownload                        |
+
+---
+
+## 7. Best Practices to Avoid Taskfile Syntax Issues
+
+- Always start your Taskfile with a `version: '3'` key.
+- Use YAML validators to check syntax before running Task.
+- Declare `dotenv` keys only in the main Taskfile, never in included ones.
+- Use namespaces to avoid task name collisions when including Taskfiles.
+- Avoid mixing shortcut and extended task syntax (e.g., don’t mix `cmd` with `cmds`).
+- Use `task --dry` frequently to validate your Taskfile without running commands.
+- When flattening includes, carefully exclude tasks that conflict.
+
+---
+
+## 8. Additional Resources
+
+- [Basic Configuration & Taskfile Structure](/getting-started/configuration-troubleshooting/configuration-basics)
+- [Includes, Modularization, and Namespaces](/taskfile_concepts/integration_scalability/modular_taskfiles)
+- [Execution Flow & Dependency Resolution](/taskfile_concepts/core_architecture/execution_flow)
+- [Using Variables & Templating](/guides/advanced-features-best-practices/variables-and-templating)
+- [Common Automation Workflows](/guides/getting-started-workflows/common-workflows)
+
+---
+
+If you encounter persistent issues, please check the [GitHub issues](https://github.com/go-task/task/issues) for similar problems or open a new one with your Taskfile and error details for help.
+
+---
+
+## Appendix: Example of a Minimal Valid Taskfile
+
+```yaml
+version: '3'
+tasks:
+  hello:
+    cmds:
+      - echo "Hello, Task!"
+```
+
+Use this minimal example to start and incrementally add complexity, validating syntax at each step.
