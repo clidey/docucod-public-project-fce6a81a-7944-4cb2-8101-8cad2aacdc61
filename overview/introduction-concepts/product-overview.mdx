@@ -1,0 +1,152 @@
+---
+title: "What is Task?"
+description: "Discover Task’s purpose as a task runner and build tool designed for simplicity and approachability. This page covers Task’s aspiration to be more user-friendly than conventional tools like GNU Make, emphasizing its modern approach to repetitive automation, clarity, and ease of adoption."
+---
+
+# What is Task?
+
+## Unlock Simplified Automation with Task
+
+Task is a modern task runner and build tool crafted to make your automation workflows straightforward and approachable. Unlike traditional tools such as GNU Make, Task focuses on clarity, ease of use, and rapid adoption, empowering you to automate repetitive tasks without getting bogged down by complexity.
+
+### Why Choose Task?
+- **Simplicity First:** Task’s design philosophy prioritizes a clean and readable syntax that anyone can grasp quickly.
+- **User-Friendly Automation:** Automate build, test, deployment, and other command sequences with intuitive taskfiles.
+- **Modern Approach:** Leverage state-of-the-art features designed to reduce friction, such as native support for dependencies, metadata, and advanced templating.
+- **Improved Productivity:** Spend less time wrestling with complex scripts and more time building.
+
+### Who Should Use This?
+Task is ideal for developers, DevOps engineers, and project teams looking for a lightweight yet powerful way to automate their workflows without the steep learning curve associated with legacy tools.
+
+---
+
+## What Exactly Is Task?
+
+Task is a command-line tool that lets you define, organize, and run automation tasks using a simple YAML configuration file called a `Taskfile.yml`. Think of it as a more accessible alternative to GNU Make, designed to streamline daily repetitive tasks involved in software builds, testing, deployment, and other operational processes.
+
+At its core, Task provides:
+
+- A declarative syntax to describe tasks and their dependencies.
+- A robust execution engine to run commands sequentially or in parallel.
+- Built-in intelligence for task up-to-date checks and incremental builds.
+
+Unlike its predecessors, Task eliminates cumbersome syntax and obscure semantics, focusing on clear intent and human readability.
+
+---
+
+## Core Features & Capabilities
+
+### 1. Human-Readable Taskfiles
+Write your automation steps in YAML with meaningful task names, dependencies, and commands that are concise and self-documenting.
+
+### 2. Dependency Management
+Define dependencies between tasks so that Task runs prerequisites automatically and in the correct order.
+
+### 3. Parallel & Concurrent Execution
+Boost performance by running tasks in parallel or limiting concurrency when needed, controlled easily via command options.
+
+### 4. Built-in Command Completion
+Enjoy shell completion for commands and task names on various shells like Zsh and Fish, making command discovery faster and foolproof.
+
+### 5. Flexible Output & Logging
+Control verbosity, color output, grouping of messages, and silent runs to suit different development workflows or CI environments.
+
+### 6. Watch Mode
+Automatically rerun tasks when source files change, speeding up iterative development.
+
+---
+
+## Why Does Task Matter?
+
+### Tangible Benefits
+- **Increase Automation Adoption:** Its simplicity means more team members can write and maintain build scripts.
+- **Reduce Human Error:** Clear task dependencies and templating reduce inconsistent manual steps.
+- **Streamline Workflows:** Combine complex sequences of commands into reusable task definitions.
+- **Accelerate Development Cycles:** Parallel execution and incremental checks shave off build times.
+
+### Common Use Cases
+- Automating build and test pipelines in software projects
+- Managing deployment tasks for cloud or container environments
+- Setting up project-specific environment initialization steps
+- Orchestrating code generation, linting, and formatting workflows
+
+### Imagine Your Workflow
+Without Task: You wrestle with verbose scripts or complex Makefiles, struggling to recall command options or fix broken build steps.
+
+With Task: A readable Taskfile describes your workflow. You run simple commands like `task build` or `task test` and have confidence the right steps happen reliably every time.
+
+---
+
+## Getting Started Preview
+
+Getting started with Task is straightforward:
+
+1. Install Task following the instructions for your platform.
+2. Create a `Taskfile.yml` at your project root.
+3. Define your first task with a name and shell command.
+4. Run your task on the command line using `task <task-name>`.
+
+### Example: Simple Taskfile
+
+```yaml
+version: '3'
+tasks:
+  greet:
+    cmds:
+      - echo "Hello, welcome to Task automation!"
+```
+
+Run it:
+
+```bash
+task greet
+```
+
+This runs your defined commands, showing the output immediately.
+
+### Next Steps
+After familiarizing yourself here, explore:
+
+- [Core Concepts and Terminology](/overview/introduction-concepts/core-concepts) to understand Task’s building blocks
+- [Writing and Running Tasks](/guides/getting-started-workflows/writing-running-tasks) for practical workflows
+
+---
+
+## Task CLI: Smart Completion and Usage
+
+Task provides intelligent shell autocompletion (as illustrated in _task_ completion scripts) allowing you to list tasks, get help, and set options like concurrency or parallel execution. For example, you can auto-complete available tasks defined in your `Taskfile.yml` or specify options like `--force` to rerun up-to-date tasks or `--dry` to preview task plans without execution.
+
+Here’s a brief snippet demonstrating how you can list tasks with descriptions in your shell:
+
+```bash
+task --list
+```
+
+This command outputs all available tasks along with their descriptions, making it easier to discover what tasks are at your disposal.
+
+You can also leverage options such as `--watch` for live reruns on file changes or use `--output` styles to suit your preference.
+
+---
+
+## Practical Tips & Best Practices
+
+- Keep task names meaningful and straightforward for easy identification.
+- Use task dependencies to avoid duplicating shared steps.
+- Leverage aliases for common task names you want to shorten.
+- Use the `--dry` flag to validate task sequences before execution.
+- Enable verbose output only when troubleshooting to keep logs clean.
+
+## Troubleshooting Common Issues
+
+- **Task Not Found:** Verify your current directory has a `Taskfile.yml` and that the task is defined.
+- **Permission Denied:** Ensure the commands within tasks have execution permissions or run with appropriate user rights.
+- **Unexpected Output:** Use the `--verbose` flag to inspect task execution details.
+- **Incomplete Autocompletion:** Reload your shell or verify Task’s completion scripts are properly sourced.
+
+---
+
+By understanding what Task is and how it improves your automation experience, you’re poised to simplify your workflows, boost team collaboration, and embrace an elegant approach to repetitive task automation.
+
+Start small, think big, and grow your automation story with Task.
+
+---
