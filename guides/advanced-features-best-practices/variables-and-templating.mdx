@@ -1,0 +1,375 @@
+---
+title: "Using Variables & Templating"
+description: "Learn how to define, reference, and pass variables in your Taskfile, including environment variable integration, templating expressions, and inheritance across includes. Highlights practical and advanced examples."
+---
+
+# Using Variables & Templating
+
+Learn how to define, reference, and pass variables in your Taskfile, including environment variable integration, templating expressions, and inheritance across includes. This guide focuses on practical examples and progressive mastery of variables and templating within Task.
+
+---
+
+## 1. Introduction
+
+Variables and templating form the backbone of flexible automation with Task. With variables, you can parameterize your commands, share values between tasks, and write reusable Taskfiles that adapt to your environment and inputs.
+
+Templating lets you embed expressions and functions directly in strings, making task definitions powerful and dynamic without complex scripts.
+
+This guide helps you master:
+
+- Defining various types of variables (strings, arrays, maps, dynamic)
+- Referencing and passing variables between tasks
+- Using **ref** for non-string values and complex data
+- Integrating environment variables and `.env` files
+- Practical templating techniques for common automation needs
+
+---
+
+## 2. Prerequisites
+
+Before you start:
+
+- Ensure Task is installed and working on your system (see [Prerequisites & System Requirements](/getting-started/environment-setup/prerequisites)).
+- Familiarity with basics of Taskfiles and running tasks ([Writing and Running Tasks](/guides/getting-started-workflows/writing-running-tasks)).
+- Some understanding of Go templates is helpful but not required.
+
+---
+
+## 3. Variable Basics
+
+### 3.1 Defining Variables
+
+Variables are declared under the `vars` key inside a task, or globally at the root `vars` key.
+
+Supported variable types include:
+
+- String
+- Boolean
+- Integer
+- Float
+- Array (list)
+- Map (dictionary)
+
+**Example:**
+
+```yaml
+version: '3'
+
+vars:
+  GLOBAL_VAR: 'Hello from global'
+
+tasks:
+  simple:
+    vars:
+      LOCAL_VAR: 'Local hello'
+      BOOL_VAR: true
+      ARRAY_VAR: [one, two, three]
+      MAP_VAR:
+        map:
+          name: Bob
+          age: 30
+    cmds:
+      - echo "{{.GLOBAL_VAR}}"         # Hello from global
+      - echo "{{.LOCAL_VAR}}"          # Local hello
+      - echo "Bool is {{.BOOL_VAR}}"   # Bool is true
+      - echo "First array item: {{index .ARRAY_VAR 0}}" # one
+      - echo "Name in map: {{.MAP_VAR.name}}"         # Bob
+```
+
+### 3.2 Special Note on Maps
+Maps require the subkey `map:` to distinguish from other types. Access map values using dot notation `{{.MAP_VAR.key}}`.
+
+### 3.3 Dynamic Variables (`sh`)
+Sometimes you want variables whose value depends on a shell command.
+
+```yaml
+vars:
+  GIT_COMMIT:
+    sh: git log -1 --format=%h
+
+cmds:
+  - echo "Commit is {{.GIT_COMMIT}}"
+```
+
+Task runs the command and substitutes output as the variable’s value.
+
+
+---
+
+## 4. Referencing and Passing Variables
+
+### 4.1 Passing Variables Between Tasks
+
+When calling other tasks, variables can be passed explicitly under `vars:`.
+
+```yaml
+tasks:
+  hello:
+    vars:
+      NAME: Bob
+    cmds:
+      - task: greet
+        vars:
+          PERSON: '{{.NAME}}'
+
+  greet:
+    cmds:
+      - echo "Hello, {{.PERSON}}!"
+```
+
+Running `task hello` prints:
+```
+Hello, Bob!
+```
+
+### 4.2 Using `ref` to Pass Non-String Variables
+
+The templating engine outputs strings. To pass variables maintaining type (arrays, maps, ints), use `ref`:
+
+```yaml
+vars:
+  NAMES: [alice, bob, charlie]
+
+tasks:
+  caller:
+    vars:
+      NAMES_REF:
+        ref: .NAMES
+    cmds:
+      - task: callee
+        vars:
+          MY_NAMES:
+            ref: .NAMES_REF
+
+  callee:
+    cmds:
+      - echo "First name: {{index .MY_NAMES 0}}"
+```
+
+This preserves array structure when passing `MY_NAMES`.
+
+### 4.3 Referencing Subkeys and Using Functions
+
+You can fully utilize templating expressions in `ref`:
+
+```yaml
+vars:
+  USER:
+    map:
+      name: Alice
+      age: 30
+
+  FIRST_NAME:
+    ref: .USER.name
+
+  FIRST_CHILD_NAME:
+    ref: (index .USER.children 0).name
+```
+
+This allows extraction and precise control.
+
+---
+
+## 5. Environment Variables & `.env` Integration
+
+### 5.1 Using Environment Variables
+
+Environment variables are automatically available in templates.
+
+```yaml
+tasks:
+  show-env:
+    cmds:
+      - echo "HOME is $HOME"
+      - echo "Home from template: {{.HOME}}"
+```
+
+You can also set environment variables for tasks using the `env` key.
+
+### 5.2 Using `.env` Files
+
+Task supports automatic loading of `.env` style files.
+
+```yaml
+env:
+  ENV: testing
+
+dotenv: ['.env', '{{.ENV}}/.env', '{{.HOME}}/.env']
+
+tasks:
+  greet:
+    cmds:
+      - echo "URL is $URL"
+```
+
+Variables in `.env` files become available in tasks.
+
+> Note: `.env` is currently unsupported inside included Taskfile.
+
+---
+
+## 6. Looping Over Variables and Collections
+
+Task supports loops inside commands using `for:` to iterate over lists, maps, task sources, or generated files.
+
+Example: Loop over a list variable:
+
+```yaml
+tasks:
+  default:
+    vars:
+      FILES: [foo.txt, bar.txt]
+    cmds:
+      - for:
+          var: FILES
+        cmd: cat {{.ITEM}}
+```
+
+To rename the iteration variable:
+
+```yaml
+      - for:
+          var: FILES
+          as: FILE
+        cmd: cat {{.FILE}}
+```
+
+Loop matrices, command sets, task dependencies and more are supported.
+
+---
+
+## 7. Advanced Examples & Patterns
+
+### 7.1 Passing Complex JSON Data
+
+You can parse JSON strings into maps and pass them around:
+
+```yaml
+vars:
+  JSON_STRING:
+    sh: echo '{"name":"Alice","children":[{"name":"Bob"}, {"name":"Charlie"}]}'
+  JSON_DATA:
+    ref: 'fromJson .JSON_STRING'
+
+tasks:
+  print-children:
+    cmds:
+      - >-
+        echo "{{.JSON_DATA.name}} has children:
+        {{- range .JSON_DATA.children}} {{.name}},{{- end}}"
+```
+
+### 7.2 Inheritance Across Included Taskfiles
+
+When including Taskfiles you can pass variables to the included namespace.
+
+```yaml
+includes:
+  lib:
+    taskfile: ./lib/Taskfile.yml
+    vars:
+      DOCKER_IMAGE: my-image:latest
+```
+
+Variables defined in the included Taskfile override those from the including file,
+use the `default` function to make them overridable:
+
+```yaml
+vars:
+  IMAGE: '{{.IMAGE | default "default-image"}}'
+```
+
+---
+
+## 8. Troubleshooting & Tips
+
+<AccordionGroup title="Troubleshooting Variables & Templating">
+<Accordion title="Variable Not Expanding or Showing `<no value>`">
+Ensure variable names match exactly and are in scope (global, task, included namespaces). Use quotes for special strings.
+</Accordion>
+<Accordion title="Dynamic Variable Shell Command Fails">
+The `sh:` commands are run relative to the task directory. Check commands for correctness and available tooling.
+</Accordion>
+<Accordion title="Incorrect Variable Type or Unexpected String Output">
+Use `ref` to pass non-string variables between tasks, especially for arrays and maps.
+</Accordion>
+<Accordion title="Included Taskfile Variables Not Overriding">
+Check variable declaration order and consider using `default` templating function.
+</Accordion>
+</AccordionGroup>
+
+### Best Practices
+
+- Prefer `ref` when passing complex or collection-type variables to maintain type integrity.
+- Use `.env` files to manage environment variables per environment.
+- Use templating functions wisely to transform data in place instead of writing shell scripts.
+- Use `sh:` dynamic variables sparingly to avoid performance issues; their values are cached during task execution.
+
+---
+
+## 9. Next Steps & Related Topics
+
+- Deepen your understanding of [Counting on Templating Functions](https://sprig.taskfile.dev/) to transform variables
+- Learn about [Including and Sharing Taskfiles](/guides/advanced-features-best-practices/including-sharing-taskfiles) to modularize your automation
+- Explore [Conditional Execution & Preconditions](/guides/advanced-features-best-practices/conditional-execution-preconditions) to run tasks smartly
+- Check out the [Templating Reference](/docs/reference/templating) for a comprehensive list of functions
+
+---
+
+## Appendix: Variable Use Examples
+
+```yaml
+version: '3'
+
+vars:
+  GREETING: "Hello"
+  NUMBERS: [1, 2, 3, 4]
+  USER:
+    map:
+      name: "Alice"
+      roles: [admin, user]
+
+tasks:
+  greet:
+    cmds:
+      - echo "{{.GREETING}}, {{.USER.name}}!"
+
+  list:
+    cmds:
+      - for:
+          var: NUMBERS
+        cmd: echo "Number: {{.ITEM}}"
+
+  roles:
+    cmds:
+      - for:
+          var: "{{.USER.roles}}"
+        cmd: echo "Role: {{.ITEM}}"
+
+  dynamic-date:
+    vars:
+      NOW:
+        sh: date +"%Y-%m-%d"
+    cmds:
+      - echo "Date: {{.NOW}}"
+
+  pass-ref:
+    vars:
+      LIST:
+        ref: ["x", "y", "z"]
+    cmds:
+      - task: use-list
+        vars:
+          MY_LIST:
+            ref: .LIST
+
+  use-list:
+    cmds:
+      - echo "First: {{index .MY_LIST 0}}"
+```
+
+---
+
+Your variable and templating mastery will transform your automation from static scripts to dynamic, reusable and elegant workflows.
+
+Happy tasking!
