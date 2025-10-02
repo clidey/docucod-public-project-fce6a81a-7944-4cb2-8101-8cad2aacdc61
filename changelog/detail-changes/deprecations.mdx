@@ -1,0 +1,196 @@
+---
+title: "Deprecation Notices"
+description: "Announcements of features, Taskfile schema versions, or APIs marked for deprecation. Users can prepare ahead by planning migrations or adjusting workflows to use supported patterns."
+---
+
+# Deprecation Notices
+
+This page gathers announcements and guidance regarding features, Taskfile schema versions, and APIs that are marked as deprecated. Keeping abreast of these notices ensures you can proactively plan migrations and adjust your workflows beyond the immediate moment, safeguarding your automation tasks against disruption caused by removed or altered functionality.
+
+---
+
+## Understanding Deprecations in Task
+
+As Task evolves, some features become outdated or replaced by improved alternatives. Deprecations signal upcoming removals or significant changes in functionality, giving you a clear heads-up to avoid reliance on soon-to-be-unsupported elements.
+
+This notice system helps you:
+
+- Identify features, commands, or schema versions that will no longer receive updates or support.
+- Plan migration paths to newer patterns with stability guarantees.
+- Prevent sudden breaks in automation by adapting your Taskfiles and scripts early.
+
+<Check>
+Proactively monitoring deprecation notices is essential for maintaining reliable and future-proof automation flows.
+</Check>
+
+---
+
+## Current Active Deprecations
+
+### Version 2 Schema (#1197)
+
+::: danger
+
+This deprecation breaks the following functionality:
+
+- All Taskfiles using Version 2 of the Taskfile schema
+- Files named `Taskvar.yml`
+
+:::
+
+The Taskfile version 2 schema has been deprecated in favor of version 3 since August 2019. Final support for version 2 was removed in Task v3.33.0 (December 2023).
+
+### What this means for you
+
+- Existing Taskfiles using version 2 schema will no longer function with versions of Task beyond v3.33.0.
+- Any direct references to `Taskvar.yml` files must be replaced.
+
+### Migration path
+
+- Upgrade your Taskfiles to version 3 schema following the [Task v3 Release Notes](https://github.com/go-task/task/releases/tag/v3.0.0).
+- Review changes between v2 and v3 schemas to adapt your Automation workflows.
+
+---
+
+### Template Functions Deprecation
+
+::: danger
+
+This deprecation breaks the following functionality:
+
+- A small subset of templating functions
+
+:::
+
+Certain templating functions have been deprecated to simplify and unify the templating engine. Examples include:
+
+| Deprecated Function | Replacement    |
+|---------------------|----------------|
+| `IsSH`              | (No replacement) |
+| `FromSlash`         | `fromSlash`     |
+| `ToSlash`           | `toSlash`       |
+| `ExeExt`            | `exeExt`        |
+
+### Recommended actions
+
+- Replace any occurrences of deprecated functions with their counterparts listed above.
+- If a function has no replacement, refactor your template logic accordingly.
+
+---
+
+### Completion Scripts Deprecation
+
+::: danger
+
+This deprecation breaks the following functionality:
+
+- Any direct use of completion scripts stored in the Task Git repository under `completion/*`.
+
+:::
+
+Direct references to completion scripts in the Task repository are deprecated due to potential movement or removal.
+
+### What to do
+
+- Switch to the new [shell completion generation method](https://taskfile.dev/docs/installation#setup-completions) for safe and future-proof integration.
+- Update your shell configuration files to remove direct script references.
+
+---
+
+## How to Use This Page
+
+Use this page as your central reference for all deprecations impacting Task. Each entry clearly outlines:
+
+- What functionality is affected.
+- Why the deprecation happened.
+- How to migrate or adapt your setup.
+
+You are encouraged to regularly check this page especially before upgrading Task versions.
+
+---
+
+## Best Practices for Handling Deprecations
+
+- **Audit your Taskfiles frequently:** Identify any usage of deprecated features before upgrading Task.
+- **Keep dependencies updated:** Some deprecations require external tool or environment updates.
+- **Follow migration instructions precisely:** Use official upgrade guides and examples to adapt Taskfiles.
+- **Test after migration:** Validate your workflow to ensure no regressions.
+- **Engage with the community:** Look out for common patterns and shared migration tips.
+
+---
+
+## Additional Resources
+
+For further detailed guidance, consult:
+
+- [Breaking Changes & Migration Notes](/changelog/upgrade-guides/breaking-changes)
+- [Upgrade Guides](/changelog/upgrade-guides/upgrade-instructions)
+- [Taskfile Schema & Data Model](/taskfile_concepts/core_architecture/taskfile_schema_concept)
+- [Deprecations Overview](/website/src/docs/deprecations/index.md)
+
+---
+
+## Example: Migrating from Version 2 to Version 3 Schema
+
+Here's an abbreviated workflow to transition your Taskfile:
+
+<Steps>
+<Step title="Identify Version 2 Usage">
+Check your Taskfile for `version: '2'` and `Taskvar.yml` presence.
+</Step>
+<Step title="Read the Release Notes">
+Study the [v3.0.0 Release Notes](https://github.com/go-task/task/releases/tag/v3.0.0) to understand schema changes.
+</Step>
+<Step title="Convert Taskfile">
+Refactor your Taskfile YAML structure to comply with version 3 requirements.
+</Step>
+<Step title="Validate Taskfile">
+Run `task --list` to catch syntax errors or warnings.
+</Step>
+<Step title="Test Execution">
+Verify workflows by running key tasks in your automation.
+</Step>
+</Steps>
+
+---
+
+## Troubleshooting Deprecations
+
+### Common Issues
+
+- *Old Taskfiles fail after upgrade:* Confirm schema version and switch to version 3.
+- *Templating functions not recognized:* Replace deprecated functions with supported ones.
+- *Completion scripts break shell integration:* Migrate to the new shell completion setup.
+
+### Where to Get Help
+
+- Search GitHub issues in the Task repository
+- Participate in Task discussion forums
+- Check FAQs related to Taskfile syntax and upgrades
+
+---
+
+Taking a proactive stance towards deprecation management will save you headaches and downtime, enabling your task automation to remain robust and efficient without surprises.
+
+
+---
+
+*Last updated: June 2024*  
+*For detailed deprecation entries and migration support, refer to the individual pages linked herein.*
+
+
+---
+
+# Related Documentation Links
+- [Breaking Changes & Migration Notes](https://taskfile.dev/changelog/upgrade-guides/breaking-changes)
+- [Upgrade Instructions](https://taskfile.dev/changelog/upgrade-guides/upgrade-instructions)
+- [Taskfile Schema Concept](https://taskfile.dev/taskfile_concepts/core_architecture/taskfile_schema_concept)
+- [Deprecations Index](https://taskfile.dev/website/src/docs/deprecations/index.md)
+
+---
+
+# Navigation
+- See 'Deprecations' in the Changelog section for full list
+- Check 'Upgrade Guides' for step-by-step migration help
+- Consult 'System Architecture' for understanding impacts on execution
+- Leverage 'Variables & Templating' guide when updating templates
