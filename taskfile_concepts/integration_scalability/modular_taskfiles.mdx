@@ -1,0 +1,362 @@
+---
+title: "Includes, Modularization, and Namespaces"
+description: "Learn best practices for splitting Taskfiles, reusing task definitions across projects, and managing includes with optionality and namespacing—enabling scalable build setups."
+---
+
+# Includes, Modularization, and Namespaces
+
+Learn best practices for splitting Taskfiles, reusing task definitions across projects, and managing includes with optionality and namespacing—enabling scalable build setups.
+
+---
+
+## Why Include Other Taskfiles?
+
+As projects grow, managing all automation tasks in a single `Taskfile.yml` becomes unwieldy and hard to maintain. Task's includes feature allows you to split your task definitions across multiple files or directories, enabling better organization and reuse.
+
+Through includes, you can:
+
+- Modularize your automation by feature, component, or domain.
+- Share common or utility tasks across multiple projects.
+- Avoid duplication by reusing the same Taskfile with different variable configurations.
+- Maintain clean and readable Taskfiles that scale with your project.
+
+---
+
+## Basic Includes Syntax
+
+To include other Taskfiles, use the top-level `includes` map. Each key is a namespace under which the included tasks will be available.
+
+```yaml
+version: "3"
+
+includes:
+  docs: ./documentation  # will look for ./documentation/Taskfile.yml
+  docker: ./DockerTasks.yml
+```
+
+You then run included tasks via the namespace prefix:
+
+```shell
+$ task docs:serve
+$ task docker:build
+```
+
+Relative paths are resolved **relative to the including Taskfile's directory**.
+
+### Using OS or Variable Interpolation in Includes
+
+You can use templating syntax to include OS-specific files or depend on variables:
+
+```yaml
+includes:
+  build: ./Taskfile_{{OS}}.yml
+```
+
+This allows flexible includes depending on your environment.
+
+---
+
+## Include Options and Advanced Configuration
+
+Include declarations support an expanded mapping syntax with these options:
+
+| Option     | Type       | Description                                                  |
+|------------|------------|--------------------------------------------------------------|
+| `taskfile` | string     | Path to the included Taskfile or directory                   |
+| `dir`      | string     | Working directory for included tasks                          |
+| `optional` | bool (def: false) | Ignore missing included Taskfile without error           |
+| `internal` | bool       | Mark included tasks as internal (hidden from CLI list)       |
+| `flatten`  | bool       | Flatten tasks into the root namespace                         |
+| `aliases`  | []string   | Alternative names for the include namespace                   |
+| `excludes` | []string   | List of tasks to exclude from the included Taskfile          |
+| `vars`     | map        | Variables to pass to the included Taskfile                    |
+| `checksum` | string     | Expected checksum for remote or immutable includes            |
+
+Example:
+
+```yaml
+includes:
+  backend:
+    taskfile: ./backend/Taskfile.yml
+    dir: ./backend
+    optional: false
+    internal: false
+    flatten: false
+    aliases: [api]
+    excludes: [internal-task]
+    vars:
+      SERVICE_NAME: backend
+```
+
+---
+
+## Namespacing and Task Invocation
+
+When you include another Taskfile, its tasks are namespaced under the include key.
+
+For example, with:
+
+```yaml
+includes:
+  utils: ./utils/Taskfile.yml
+```
+
+You run an included task like:
+
+```shell
+task utils:cleanup
+```
+
+### Namespace Aliases
+
+You can specify aliases for the include to shorten invocation:
+
+```yaml
+includes:
+  generate:
+    taskfile: ./taskfiles/Generate.yml
+    aliases: [gen]
+```
+
+You can then run:
+
+```shell
+task gen:yaml
+```
+
+---
+
+## Flattening Includes
+
+Flattening exposes included tasks directly in the root namespace, without prefixing.
+
+```yaml
+includes:
+  common:
+    taskfile: ./common.yml
+    flatten: true
+```
+
+Now `common:build` is available as just `build`:
+
+```shell
+task build
+```
+
+**Important:** If multiple tasks have the same name after flattening, Task will throw an error.
+
+You can use `excludes` to omit conflicting tasks:
+
+```yaml
+includes:
+  common:
+    taskfile: ./common.yml
+    flatten: true
+    excludes: [build]
+```
+
+---
+
+## Passing Variables to Included Taskfiles
+
+You can pass variables that override or extend those declared in the included Taskfile:
+
+```yaml
+includes:
+  backend:
+    taskfile: ./taskfiles/Docker.yml
+    vars:
+      DOCKER_IMAGE: backend_image
+
+  frontend:
+    taskfile: ./taskfiles/Docker.yml
+    vars:
+      DOCKER_IMAGE: frontend_image
+```
+
+Included Taskfiles can also use Sprig or Go template functions like `default` to allow values to be overridden by including files.
+
+---
+
+## Optional Includes
+
+Mark an include as `optional: true` to avoid errors if the file is missing.
+
+Example:
+
+```yaml
+includes:
+  tests:
+    taskfile: ./tests/Taskfile.yml
+    optional: true
+```
+
+If the file doesn’t exist, Task simply continues. This is useful for including optional components.
+
+---
+
+## Internal Includes and Tasks
+
+Sometimes you want to include utility tasks that should not be called directly.
+
+Marking `internal: true` on the include sets all included tasks as internal, hiding them from task lists and direct invocation.
+
+```yaml
+includes:
+  utils:
+    taskfile: ./internal-tasks.yml
+    internal: true
+```
+
+Internal tasks can still be called by other tasks.
+
+---
+
+## Excluding Specific Tasks from Includes
+
+Use `excludes` to omit tasks from the included Taskfile, e.g.: 
+
+```yaml
+includes:
+  shared:
+    taskfile: ./shared.yml
+    excludes: [internal-setup, debug-only]
+```
+
+Excluded tasks won't be available via the namespace.
+
+---
+
+## Directory Context (`dir` option)
+
+Included Taskfiles' commands run by default in the current working directory.
+
+Use `dir` in the include to force tasks to run in a specific directory, usually the included Taskfile's path:
+
+```yaml
+includes:
+  docs:
+    taskfile: ./docs/Taskfile.yml
+    dir: ./docs
+```
+
+You can also use templated variables for dynamic directory paths.
+
+
+---
+
+## Common Pitfalls and Best Practices
+
+- Ensure all included Taskfiles use the **same schema version** as the main Taskfile.
+- Avoid task name collisions when flattening
+- Use optional includes for dependencies that may not exist on all environments
+- Pass variables to customize reused Taskfiles rather than duplicating content
+- Use internal includes for utility tasks not intended for end-user invocation
+- Exclude conflicting or private tasks as needed
+
+
+---
+
+## Troubleshooting Includes
+
+- **Error: Included Taskfile can't have dotenv declarations**
+
+  Included Taskfiles are not allowed to declare `dotenv` files; move them to the main Taskfile.
+
+- **Duplicate task names when flattening**
+
+  Resolve by excluding duplicate tasks or renaming.
+
+- **Errors on missing files in includes**
+
+  Use `optional: true` to avoid failures on missing includes.
+
+- **Variables not overriding as expected**
+
+  Use templating functions like `default` in the included Taskfile to allow overrides.
+
+
+---
+
+## Practical Examples
+
+### Simple Include
+
+```yaml
+version: "3"
+
+includes:
+  utilities: ./utils
+
+tasks:
+  default:
+    cmds:
+      - task: utilities:cleanup
+```
+
+### Include with Variables
+
+```yaml
+includes:
+  backend:
+    taskfile: ./docker/Taskfile.yml
+    vars:
+      IMAGE_NAME: my-backend
+```
+
+### Flattening with Exclusion
+
+```yaml
+includes:
+  library:
+    taskfile: ./lib.yml
+    flatten: true
+    excludes: [clean]
+```
+
+### Optional Include
+
+```yaml
+includes:
+  tests:
+    taskfile: ./tests/Taskfile.yml
+    optional: true
+```
+
+---
+
+## How Includes Fit in the Task Ecosystem
+
+Includes are fundamental for modular automation setups, allowing you to write maintainable, reusable Taskfiles. They complement the variable system for parameterization, leverage namespaces and aliases for easy invocation, and work smoothly with conditional execution and preconditions to build robust automation pipelines.
+
+To master includes, also explore:
+
+- [Variables and Templating](../taskfile_concepts/advanced_features/variable_system.md)
+- [Conditional Execution & Preconditions](../guides/advanced-features-best-practices/conditional-execution-preconditions.md)
+- [Taskfile Schema & Data Model](../taskfile_concepts/core_architecture/taskfile_schema_concept.md)
+
+
+---
+
+## Visual Overview
+
+```mermaid
+flowchart TD
+  MainTaskfile["Main Taskfile.yml"]
+  IncludeA["utils: ./utils/Taskfile.yml"]
+  IncludeB["build: ./build/Taskfile.yml"]
+
+  MainTaskfile -->|includes| IncludeA
+  MainTaskfile -->|includes| IncludeB
+
+  subgraph Namespaces
+    UtilsTasks["utils:<task>"]
+    BuildTasks["build:<task>"]
+  end
+
+  IncludeA --> UtilsTasks
+  IncludeB --> BuildTasks
+
+  MainTaskfile -->|runs| MainTask[""]
+  MainTaskfile -->|calls| UtilsTasks
+```
