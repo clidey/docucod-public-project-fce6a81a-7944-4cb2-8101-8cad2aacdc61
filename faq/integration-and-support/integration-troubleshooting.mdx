@@ -1,0 +1,160 @@
+---
+title: "Troubleshooting Integrations"
+description: "Addresses common issues and questions when integrating Task with CI/CD pipelines, development environments, or external scripts—covering environment variables, shell compatibility, and file path handling."
+---
+
+# Troubleshooting Integrations
+
+This page focuses exclusively on resolving common issues you might encounter when integrating **Task** with CI/CD pipelines, development environments, and external scripts. Here you’ll find clear, actionable advice on managing environment variables, shell compatibility, and file path handling — ensuring your automation runs smoothly in diverse integration contexts.
+
+---
+
+## Frequently Asked Questions
+
+### Why does my Taskfile behave differently in CI/CD environments?
+Task execution in CI/CD pipelines often runs within different shells and environment setups than your local machine. This can impact how environment variables are accessed, commands are interpreted, and file paths are resolved.
+
+**Solution:**
+- Explicitly set the shell using the `task:` `shell` configuration if your CI environment requires a specific shell.
+- Verify environment variables are correctly passed or injected into the pipeline.
+- Use absolute or well-tested relative paths instead of relying on current working directories.
+
+### How do I ensure environment variables are available inside Task when running via external scripts or CI?
+By design, Task merges environment variables from your OS, `.env` files (if used), and directly from the Taskfile. However, environment variables defined in CI systems or external scripts may not automatically propagate.
+
+**Solution:**
+- Confirm variables are explicitly exported or set in your CI environment or script context.
+- Use Task's variable interpolation and environment inheritance capabilities (see [Environment and .env Files](../../taskfile_concepts/advanced_features/environment_and_dotenv)) to surface variables.
+- Avoid relying on shell-specific environment injection without confirmation.
+
+### Why does my Task command fail with "command not found" or syntax errors in CI or external shells?
+Different shells have varying syntax, built-in commands, and feature support. For example, Windows CMD differs greatly from Bash or PowerShell.
+
+**Solution:**
+- Use Task's `shell` directive to specify a compatible shell explicitly for the CI or script environment.
+- When embedding shell commands, use POSIX-compatible syntax for cross-platform safety (see [Task and Shell Scripting](../../guides/integration-real-world-examples/shell-scripting-interop)).
+- Test commands independently inside your CI shell before embedding.
+
+### How should I handle file paths in cross-platform and CI environments?
+File paths can vary tremendously: from Windows backslashes (`\`) to Unix-style forward slashes (`/`), and relative versus absolute paths can differ based on CI pipeline execution directories.
+
+**Solution:**
+- Prefer forward slashes `/` in Taskfiles since Task normalizes paths across platforms.
+- Prefer relative paths based on `task` working directories rather than hardcoded absolute paths.
+- Use environment variables or Task variables to construct paths dynamically, adapting per environment.
+
+### What if environment variables or shell configurations set in my usual development environment are not applied in CI?
+CI and external scripts usually run in clean environments, lacking local profiles or shell configurations.
+
+**Solution:**
+- Explicitly source environment files or scripts in Task using commands before your main commands.
+- Pass environment variables directly via the CI pipeline configuration.
+- Avoid implicit shell profile assumptions.
+
+---
+
+## Common Issues & Solutions
+
+### 1. Environment Variables Missing or Incorrect
+
+Problem: Task behaves unexpectedly because environment variables are missing or incorrectly interpreted.
+
+- CI systems often isolate environment variables.
+- Local `.env` files may not be loaded in CI or scripts.
+
+**How to fix:**
+- Use Task's native `.env` support or export variables explicitly in pipeline configs.
+- Use debugging commands like `env` or `printenv` as a Task command to inspect available variables.
+
+### 2. Shell Compatibility Breaks Commands
+
+Problem: Commands that work locally fail in CI or script-triggered runs.
+
+- Different shell interpreters (sh, bash, powershell, cmd) interpret commands differently.
+- Built-in commands or shell features may not exist.
+
+**How to fix:**
+- Specify the shell explicitly in your Taskfile tasks using the `shell` key.
+- Ensure scripts and commands use portable syntax.
+- Test commands in target shell environments.
+
+### 3. File Path Issues
+
+Problem: Task cannot find files or behaves erratically due to incorrect paths.
+
+- Paths may differ due to platform slashes or pipeline working directories.
+- Relative paths may not resolve if working directory assumptions fail.
+
+**How to fix:**
+- Use forward slashes `/` for paths inside Taskfiles.
+- Define paths relative to task working directory or set an explicit `dir`.
+- Use variables to adapt paths across environments.
+
+---
+
+## Troubleshooting Steps
+
+Follow this progressive checklist to diagnose integration problems:
+
+<Steps>
+<Step title="Verify Environment Variables">
+Run a simple task with commands like `echo $VAR_NAME` or `env` to confirm variables are present.
+</Step>
+<Step title="Check Shell Configuration">
+Ensure the shell used by Task matches your external environment. Adjust the shell with the `shell` key if needed.
+</Step>
+<Step title="Inspect File Paths">
+Validate all file paths used by tasks, including scripts and sources, using portable path separators and relative references.
+</Step>
+<Step title="Test in Isolation">
+Manually reproduce commands from your Taskfile within your CI or external script shell to catch shell-specific issues.
+</Step>
+<Step title="Enable Verbose Logging">
+Use Task’s verbose or debug flags (e.g., `-v` or `--debug`) to get detailed output and identify failures.
+</Step>
+</Steps>
+
+---
+
+## Best Practices
+
+- Always specify shells explicitly when integrating with CI or scripts to prevent subtle differences.
+- Use environment variable inheritance thoughtfully; never assume CI or external contexts mirror local machines.
+- Leverage `.env` files combined with CI variable sets for consistent environment management.
+- Construct file paths using variables and forward slashes for portability.
+- Test your task commands in the exact environment they will run—this avoids surprises.
+
+---
+
+## Additional Resources
+
+- [Integrating Task with CI/CD](../../guides/integration-real-world-examples/integrating-with-ci) — Detailed guidance on pipeline integration.
+- [Task and Shell Scripting](../../guides/integration-real-world-examples/shell-scripting-interop) — Best practices for shell command embedding.
+- [Environment and .env Files](../../taskfile_concepts/advanced_features/environment_and_dotenv) — In-depth environment variable management.
+- [Basic Configuration & Taskfile Structure](../../getting-started/configuration-troubleshooting/configuration-basics) — How to define shell and environment settings.
+
+---
+
+## Troubleshooting Common Integration Errors
+
+<AccordionGroup title="Common Integration Errors">
+<Accordion title="Command Not Found or Syntax Errors in CI">
+Check task shell specification and adapt command syntax to the shell available in CI. For example, use `bash` or `sh` for Unix-like shells, `powershell` on Windows. Avoid shell built-ins not supported in the CI environment.
+</Accordion>
+<Accordion title="Environment Variables Are Empty or Not Set">
+Validate that your CI pipeline exports variables properly; check the task environment inside Task using a debug task; consider employing `.env` files or explicit environment variable declaration in Taskfiles.
+</Accordion>
+<Accordion title="File Path Failures">
+Verify working directories and relative paths in your Taskfile, especially for source or script files. Use Task's `dir` setting or absolute paths when necessary, but prefer relative and portable paths.
+</Accordion>
+</AccordionGroup>
+
+---
+
+## Summary
+
+This page delivers targeted solutions to help you overcome integration hurdles with Task—covering environment variables, shell compatibility, and path handling in CI pipelines or external scripts. By following the guidance here, you ensure consistent, robust automation no matter where or how Task runs.
+
+<Check>
+Regularly revisit your integration scripts and Taskfiles when upgrading Task or changing your CI environments to catch any compatibility shifts early.
+</Check>
