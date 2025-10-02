@@ -1,0 +1,513 @@
+---
+title: "Taskfile Schema & Data Model"
+description: "Dive into the structure of a Taskfile—the declarative heart of the system. Understand how tasks, dependencies, variables, matrix, platforms, and includes are expressed in the YAML schema and mapped to the underlying Go data structures."
+---
+
+# Taskfile Schema & Data Model
+
+Dive into the structure of a Taskfile—the declarative heart of Task. This guide explains how tasks, dependencies, variables, matrix configurations, platform constraints, and included Taskfiles are expressed in the YAML schema and how they map to the underlying Go data structures.
+
+---
+
+## Introduction
+
+At the core of Task is the `Taskfile.yml`, a powerful declarative configuration file that defines all automation workflows. Understanding the Taskfile schema unlocks the full potential of Task by enabling you to write expressive, maintainable automation scripts.
+
+The Taskfile schema declares global properties and task definitions in YAML format. It supports features like variables, dependencies, commands, conditionals, platform targeting, includes (modularization), and execution controls.
+
+This page focuses strictly on the Taskfile schema—the formal structure you author—and how it corresponds to the Go-based internal data model.
+
+---
+
+## Taskfile Root Schema Overview
+
+The Taskfile root is a YAML mapping containing these key top-level entries:
+
+| Property     | Type          | Required | Description |
+|--------------|---------------|----------|-------------|
+| `version`    | string/number | Yes      | The Taskfile schema version, e.g., `3`. |
+| `output`     | string/object | No       | Controls output display style (`interleaved`, `group`, `prefixed`). |
+| `method`     | string        | No       | Default up-to-date check method (`checksum`, `timestamp`, `none`). |
+| `includes`   | map           | No       | Include and namespace other Taskfiles. |
+| `vars`       | map           | No       | Defines global variables available in all tasks. |
+| `env`        | map           | No       | Defines global environment variables. |
+| `tasks`      | map           | Yes      | Defines all tasks, commands, and dependencies. |
+| `silent`     | bool          | No       | Suppress default command output globally. |
+| `dotenv`     | list          | No       | Load `.env` files for environment variables. |
+| `run`        | string        | No       | Default execution behavior for tasks (`always`, `once`, `when_changed`). |
+| `interval`   | string        | No       | Watch interval duration for `--watch` mode. |
+| `set`        | list          | No       | POSIX shell options applied globally to commands. |
+| `shopt`      | list          | No       | Bash shell options applied globally. |
+
+Example minimal Taskfile root:
+
+```yaml
+version: '3'
+tasks:
+  default:
+    cmds:
+      - echo "Hello, Taskfile!"
+```
+
+---
+
+## Variables (`vars`) and Environment (`env`)
+
+### Global Variables
+`vars` define global variables accessible to all tasks. They support:
+
+- Static strings, numbers, booleans, arrays, or null.
+- Dynamic command output via `sh` key.
+- Variable references (`ref`).
+- Nested maps (`map`).
+
+#### Examples
+```yaml
+vars:
+  APP_NAME: myapp
+  VERSION: 1.0.0
+  DEBUG: true
+  FEATURES: [auth, logging]
+  COMMIT_HASH:
+    sh: git rev-parse HEAD
+  FULL_VERSION:
+    ref: VERSION
+  CONFIG:
+    map:
+      database: postgres
+      cache: redis
+```
+
+### Global Environment Variables
+`env` defines environment variables available during task command execution, supporting the same formats as `vars`.
+
+```yaml
+env:
+  NODE_ENV: production
+  DATABASE_URL:
+    sh: echo $DATABASE_URL
+```
+
+---
+
+## Includes
+
+Includes bring external Taskfiles into the current namespace, enabling modular reusable libraries and separation of concerns.
+
+### Include Properties
+Each include entry is identified by a namespace key, with either a simple string path or an expanded object with options:
+
+| Property      | Type            | Default | Description |
+|---------------|-----------------|---------|-------------|
+| taskfile      | string          | —       | Path to the included Taskfile or directory. Required if full object. |
+| dir           | string          | —       | Working directory for included tasks. |
+| optional      | bool            | false   | Don't error if missing. |
+| flatten       | bool            | false   | Include tasks without namespace prefix. |
+| internal      | bool            | false   | Hide included tasks from CLI and task list. |
+| aliases       | list of strings | —       | Alternative namespace aliases. |
+| excludes      | list of strings | —       | Tasks to exclude from inclusion. |
+| vars          | map             | —       | Variables passed to included Taskfile. |
+| checksum      | string          | —       | Expected checksum for inclusion validation. |
+
+#### Example
+```yaml
+includes:
+  common:
+    taskfile: ./common.yml
+    flatten: true
+    vars:
+      ENVIRONMENT: production
+  database:
+    taskfile: ./db.yml
+    aliases: [db, data]
+```
+
+### Behavior
+- Included Taskfiles are merged following namespace rules.
+- Variables can be overridden or passed down.
+- Internal or optional includes modify CLI visibility and error behavior respectively.
+
+---
+
+## Tasks
+
+The heart of automation, tasks define executable units combining commands, dependencies, environment, and execution options.
+
+### Task Definition Formats
+Tasks support three primary syntaxes:
+
+- **Simple string** — command string shortcut.
+- **Array of commands** — multiple commands executed sequentially.
+- **Full object** — detailed configuration.
+
+#### Examples
+```yaml
+tasks:
+  hello: echo "Hello World"
+  build:
+    - go mod tidy
+    - go build ./...
+  deploy:
+    desc: "Deploy the application"
+    cmds:
+      - ./scripts/deploy.sh
+```
+
+### Key Task Properties
+
+| Property       | Type            | Description |
+|----------------|-----------------|-------------|
+| `cmd` or `cmds`| string or array | Command(s) to run. Supports string commands or nested task calls. |
+| `deps`         | array           | Tasks that must complete before this task. Run in parallel by default. Can include loops for dynamic dependencies. |
+| `desc`         | string          | Short description shown in `task --list`. |
+| `summary`      | string          | Detailed description for `task --summary`. Supports multi-line. |
+| `prompt`       | string/array    | Prompt(s) to confirm before execution. Declining aborts task(s). |
+| `aliases`      | array           | Alternative task names (aliases). |
+| `sources`      | array           | Files/globs acting as inputs to check for changes (used by timestamp/checksum). Supports exclusions. |
+| `generates`    | array           | Files generated by the task (used by timestamp). Supports exclusions. |
+| `status`       | array           | Commands run to check if the task should be executed (overrides default up-to-date methods). |
+| `preconditions`| array           | Commands that must succeed for the task to run, else error. Supports messages. |
+| `requires`     | object          | Variables that must be set for the task to run. Supports enums for validation. |
+| `watch`        | boolean         | Enables watch mode for the task. |
+| `platforms`    | array           | List of platforms the task runs on (e.g., `windows`, `linux`). |
+| `silent`       | boolean         | Suppress task name and command output (but not command output). |
+| `internal`     | boolean         | Hide task from CLI and `task --list`. Prevent external invocation. |
+| `run`          | string          | Execution mode if called multiple times: `always`, `once`, or `when_changed`. |
+| `set`          | array           | POSIX shell options applied to all commands in the task (like `errexit`). |
+| `shopt`        | array           | Bash shell options for all commands. |
+| `env`          | map             | Environment variables scoped to the task. |
+| `vars`         | map             | Variables scoped to the task (can override globals). |
+| `dotenv`       | array           | List of `.env` files parsed before running the task. |
+
+---
+
+## Commands and Command Variants
+
+### Simple String Commands
+
+A straightforward shell command to execute.
+
+```yaml
+tasks:
+  greet:
+    cmds:
+      - echo "Hello, Task!"
+```
+
+### Command Object Format
+
+For advanced command options like `silent`, `ignore_error`, platform restrictions, and shell options.
+
+```yaml
+tasks:
+  greet:
+    cmds:
+      - cmd: echo "Hello, Task!"
+        silent: true
+        ignore_error: false
+        platforms: [linux, darwin]
+        set: [errexit]
+        shopt: [globstar]
+```
+
+### Task Calls Within Commands
+
+Commands can invoke other tasks with argument variables and silent mode.
+
+```yaml
+cmds:
+  - task: build
+    vars:
+      MODE: production
+    silent: false
+```
+
+### Deferred Commands
+
+Commands or task calls to run after the parent task completes, even if it fails.
+
+```yaml
+cmds:
+  - echo "Start work"
+  - defer: echo "Cleaning up"
+  - defer:
+      task: cleanup
+      vars:
+        MODE: full
+```
+
+### Loops Within Commands
+
+Iterate over a list, variable, matrix, or a source/generate list.
+
+```yaml
+cmds:
+  - for: [alice, bob, charlie]
+    cmd: echo "Hello {{.ITEM}}"
+  - for:
+      var: ITEMS
+      split: ","
+      as: CURRENT
+    cmd: echo "Processing {{.CURRENT}}"
+  - for:
+      matrix:
+        OS: [linux, windows, darwin]
+        ARCH: [amd64, arm64]
+    cmd: echo "Testing {{.OS}}/{{.ARCH}}"
+```
+
+---
+
+## Dependencies (`deps`)
+
+Define prerequisite tasks executed before the current task. By default, dependencies run in parallel.
+
+```yaml
+tasks:
+  deploy:
+    deps: [build, test]
+    cmds:
+      - ./deploy.sh
+```
+
+### Dependency loops
+
+You can loop dependencies dynamically:
+
+```yaml
+tasks:
+  build-all:
+    deps:
+      - for: [frontend, backend, worker]
+        task: build
+        vars:
+          SERVICE: '{{.ITEM}}'
+```
+
+### Silent dependencies
+
+Dependencies can run silently, suppressing their output.
+
+```yaml
+  main:
+    deps:
+      - task: setup
+        silent: true
+    cmds:
+      - echo "Main task"
+```
+
+---
+
+## Preconditions and Conditional Execution
+
+Preconditions are commands that must succeed before running a task. Failing preconditions abort the task with an optional error message.
+
+```yaml
+tasks:
+  build:
+    preconditions:
+      - test -f ./src
+    cmds:
+      - go build ./...
+
+  deploy:
+    preconditions:
+      - sh: test -n "$API_KEY"
+        msg: 'API_KEY environment variable is required'
+      - sh: test -f ./app
+        msg: "Application binary not found. Run 'task build' first."
+    cmds:
+      - ./deploy.sh
+```
+
+---
+
+## Platform Constraints
+
+Target specific operating systems for tasks or individual commands to ensure cross-platform compatibility.
+
+```yaml
+tasks:
+  windows-build:
+    platforms: [windows]
+    cmds:
+      - go build -o app.exe ./cmd
+  unix-build:
+    platforms: [linux, darwin]
+    cmds:
+      - go build -o app ./cmd
+```
+
+Platform conditions can also be set per command within a task.
+
+---
+
+## Shell Configurations
+
+Configure shell environment options globally, per task, or per command.
+
+- `set`: POSIX shell options like `errexit` (exit on error), `nounset` (error on undefined variables), and `pipefail`.
+- `shopt`: Bash-specific options such as `globstar` (allow `**` recursive globs).
+
+Example global shell options:
+
+```yaml
+set: [errexit, nounset, pipefail]
+shopt: [globstar]
+```
+
+Per task or command, these options can be overridden or supplemented.
+
+---
+
+## Output Configuration
+
+Control how task command output is displayed, especially for parallel execution.
+
+Available output modes:
+
+- `interleaved` (default): lines appear as executed.
+- `group`: groups command output, printing after command completes.
+- `prefixed`: prefixes each line with the task name or custom prefix.
+
+Example:
+```yaml
+output: group
+# or advanced
+output:
+  group:
+    begin: '::group::{{.TASK}}'
+    end: '::endgroup::'
+    error_only: false
+```
+
+---
+
+## Execution Behavior
+
+Control how often tasks run and their up-to-date checking method:
+
+- `run`: default execution behavior (`always`, `once`, `when_changed`).
+- `method`: default up-to-date check method (`checksum`, `timestamp`, `none`).
+
+Example:
+```yaml
+run: once
+method: timestamp
+```
+
+---
+
+## Full Taskfile Schema Example
+
+```yaml
+version: '3'
+output: group
+method: checksum
+
+vars:
+  APP_NAME: myapp
+  VERSION: 1.2.3
+
+env:
+  NODE_ENV: production
+
+includes:
+  common:
+    taskfile: ./common.yml
+    flatten: true
+    vars:
+      ENVIRONMENT: production
+
+tasks:
+  build:
+    desc: "Build the application"
+    cmds:
+      - go build -o bin/app ./cmd
+    sources:
+      - '**/*.go'
+      - go.mod
+    generates:
+      - bin/app
+    preconditions:
+      - sh: test -d ./cmd
+        msg: 'Command directory missing'
+    watch: true
+
+  test:
+    deps:
+      - build
+    cmds:
+      - go test ./...
+
+  deploy:
+    desc: "Deploy to production"
+    requires:
+      vars:
+        - API_KEY
+        - name: ENVIRONMENT
+          enum: [staging, production]
+    preconditions:
+      - sh: test -n "$API_KEY"
+        msg: 'API_KEY must be set'
+    cmds:
+      - ./deploy.sh
+```
+
+---
+
+## Mapping to Go Data Structures
+
+Internally, Task uses Go structs to parse and represent the Taskfile schema as an Abstract Syntax Tree (AST). The `ast.Taskfile` type holds the entire Taskfile data:
+
+- `Version`: Semver version of the schema.
+- `Output`: Output mode configuration.
+- `Method`: Default up-to-date method.
+- `Includes`: Collection of includes and their options.
+- `Vars`: Global variables.
+- `Env`: Global environment variables.
+- `Tasks`: Map of task names to `Task` structs.
+- `Silent`, `Dotenv`, `Run`, `Interval`, `Set`, `Shopt`: Additional global configurations.
+
+The `Task` struct models each task with fields for commands, dependencies, descriptions, prompts, aliases, sources, generates, preconditions, requires, platforms, shell options, environment, variables, and more.
+
+This internal alignment guarantees that every YAML Taskfile schema feature has a precise representation within the Task runtime.
+
+---
+
+## Best Practices & Tips
+
+- **Use explicit `version: '3'`** in all Taskfiles to ensure compatibility.
+- **Modularize with Includes** to keep Taskfiles manageable and reusable.
+- **Leverage Variables and Environment** for flexible task configurations.
+- **Use Preconditions and Requires** to enforce necessary conditions and input validation upfront.
+- **Define `sources` and `generates`** for timestamp-based up-to-date checks.
+- **Set shell options (`set` and `shopt`)** carefully for robust execution and debugging.
+- **Prefer descriptive `desc` and `summary`** for better usability and documentation.
+- **Avoid including `.env` files in included Taskfiles** — define these only in the main Taskfile.
+
+---
+
+## Troubleshooting Common Issues
+
+- **Included Taskfiles cannot have `dotenv` entries.** Move all `.env` declarations to the main Taskfile.
+- **Namespace collisions during includes.** Use `flatten: false` or unique namespaces to avoid conflicts.
+- **Undefined variables** cause errors unless guarded by preconditions or `requires`.
+- **Platform-specific tasks failing on unsupported OS.** Use the `platforms` attribute to filter appropriately.
+- **Commands silently failing and blocking execution.** Use `ignore_error` to allow continuation where safe.
+
+---
+
+## See Also
+
+- [Taskfile Schema Reference](https://taskfile.dev/reference/schema)
+- [Using Variables & Templating Guide](/guides/advanced-features-best-practices/variables-and-templating)
+- [Including and Sharing Taskfiles Guide](/guides/advanced-features-best-practices/including-sharing-taskfiles)
+- [Conditional Execution & Preconditions Guide](/guides/advanced-features-best-practices/conditional-execution-preconditions)
+- [How Task Runs: The Big Picture](/taskfile_concepts/core_architecture/task_runner_overview)
+- [System Architecture Overview](/overview/architecture-features/system-architecture)
+
+---
+
+Understanding the Taskfile schema is crucial for authoring effective Task definitions that facilitate robust, platform-aware, and reusable automation workflows. Use this knowledge as a foundation to craft complex task ecosystems that suit your project's needs precisely.
