@@ -1,0 +1,191 @@
+{
+  "background": {
+    "decoration": "gradient"
+  },
+  "colors": {
+    "dark": "#1E3A8A",
+    "light": "#60A5FA",
+    "primary": "#60A5FA"
+  },
+  "favicon": "/favicon.svg",
+  "fonts": {
+    "family": "Montserrat",
+    "format": "woff2",
+    "source": "https://fonts.gstatic.com/s/googlesansflex/v5/t5sJIQcYNIWbFgDgAAzZ34auoVyXkJCOvp3SFWJbN5hF8Ju1x6sKCyp0l9sI40swNJwGpVd4AZzz0v6lJ4qFXNZhGjLvDSkV4USKMo6qQzwliVdHAy9jxTDHg_ugnAakpwGc-cxgUqDCIUI.woff2"
+  },
+  "icons": {
+    "library": "fontawesome"
+  },
+  "logo": {
+    "dark": "./logo/logo.svg",
+    "light": "./logo/logo.svg"
+  },
+  "name": "Task",
+  "navigation": {
+    "tabs": [
+      {
+        "groups": [
+          {
+            "group": "Introduction \u0026 Core Concepts",
+            "pages": [
+              "overview/introduction-concepts/product-overview",
+              "overview/introduction-concepts/core-concepts",
+              "overview/introduction-concepts/target-audience-usecases"
+            ]
+          },
+          {
+            "group": "Architecture \u0026 Feature Overview",
+            "pages": [
+              "overview/architecture-features/system-architecture",
+              "overview/architecture-features/feature-overview",
+              "overview/architecture-features/integration-overview"
+            ]
+          }
+        ],
+        "tab": "Overview"
+      },
+      {
+        "groups": [
+          {
+            "group": "Environment Setup",
+            "pages": [
+              "getting-started/environment-setup/prerequisites",
+              "getting-started/environment-setup/installation"
+            ]
+          },
+          {
+            "group": "Your First Taskfile",
+            "pages": [
+              "getting-started/first-steps/project-setup",
+              "getting-started/first-steps/first-run"
+            ]
+          },
+          {
+            "group": "Configuration \u0026 Troubleshooting",
+            "pages": [
+              "getting-started/configuration-troubleshooting/configuration-basics",
+              "getting-started/configuration-troubleshooting/troubleshooting-common"
+            ]
+          }
+        ],
+        "tab": "Getting Started"
+      },
+      {
+        "groups": [
+          {
+            "group": "Getting Started \u0026 Essential Workflows",
+            "pages": [
+              "guides/getting-started-workflows/installation-setup",
+              "guides/getting-started-workflows/writing-running-tasks",
+              "guides/getting-started-workflows/common-workflows"
+            ]
+          },
+          {
+            "group": "Advanced Features \u0026 Best Practices",
+            "pages": [
+              "guides/advanced-features-best-practices/variables-and-templating",
+              "guides/advanced-features-best-practices/including-sharing-taskfiles",
+              "guides/advanced-features-best-practices/conditional-execution-preconditions",
+              "guides/advanced-features-best-practices/performance-parallelism"
+            ]
+          },
+          {
+            "group": "Integration \u0026 Real-World Examples",
+            "pages": [
+              "guides/integration-real-world-examples/integrating-with-ci",
+              "guides/integration-real-world-examples/shell-scripting-interop",
+              "guides/integration-real-world-examples/project-examples"
+            ]
+          }
+        ],
+        "tab": "Guides"
+      },
+      {
+        "groups": [
+          {
+            "group": "Core Architecture \u0026 Execution Model",
+            "pages": [
+              "taskfile_concepts/core_architecture/task_runner_overview",
+              "taskfile_concepts/core_architecture/taskfile_schema_concept",
+              "taskfile_concepts/core_architecture/execution_flow"
+            ]
+          },
+          {
+            "group": "Advanced Concepts \u0026 Features",
+            "pages": [
+              "taskfile_concepts/advanced_features/variable_system",
+              "taskfile_concepts/advanced_features/environment_and_dotenv",
+              "taskfile_concepts/advanced_features/fingerprinting_up_to_date"
+            ]
+          },
+          {
+            "group": "Integration Patterns \u0026 Scalability",
+            "pages": [
+              "taskfile_concepts/integration_scalability/modular_taskfiles",
+              "taskfile_concepts/integration_scalability/platform_support"
+            ]
+          }
+        ],
+        "tab": "Concepts"
+      },
+      {
+        "groups": [
+          {
+            "group": "Release History \u0026 Highlights",
+            "pages": [
+              "changelog/release-history/version-timeline",
+              "changelog/release-history/highlights"
+            ]
+          },
+          {
+            "group": "Upgrading and Migrations",
+            "pages": [
+              "changelog/upgrade-guides/breaking-changes",
+              "changelog/upgrade-guides/upgrade-instructions"
+            ]
+          },
+          {
+            "group": "Detailed Release Notes",
+            "pages": [
+              "changelog/detail-changes/features-improvements",
+              "changelog/detail-changes/bug-fixes-patches",
+              "changelog/detail-changes/deprecations"
+            ]
+          }
+        ],
+        "tab": "Changelog"
+      },
+      {
+        "groups": [
+          {
+            "group": "Getting Started \u0026 Common Issues",
+            "pages": [
+              "faq/getting-started-issues/install-troubleshooting",
+              "faq/getting-started-issues/taskfile-problems",
+              "faq/getting-started-issues/basic-run-errors"
+            ]
+          },
+          {
+            "group": "Workflow Optimization \u0026 Performance",
+            "pages": [
+              "faq/workflow-optimization/speeding-up-tasks",
+              "faq/workflow-optimization/common-advanced-usage"
+            ]
+          },
+          {
+            "group": "Integrations, Community \u0026 Support",
+            "pages": [
+              "faq/integration-and-support/integration-troubleshooting",
+              "faq/integration-and-support/support-resources"
+            ]
+          }
+        ],
+        "tab": "FAQ"
+      }
+    ]
+  },
+  "styling": {
+    "codeblocks": "dark",
+    "eyebrows": "breadcrumbs"
+  }
+}
