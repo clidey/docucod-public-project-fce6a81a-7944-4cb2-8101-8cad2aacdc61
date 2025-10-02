@@ -1,0 +1,233 @@
+---
+title: "Leveraging Advanced Taskfile Features"
+description: "Explains how to make use of matrix builds, platform filters, dynamic variables, environment inheritance, and other advanced Taskfile options for more powerful automation."
+---
+
+# Leveraging Advanced Taskfile Features
+
+Harness the full power of Task by mastering advanced features like matrix builds, platform filters, dynamic variables, and environment inheritance. This guide helps you unlock powerful automation scenarios, building on the core concepts of Taskfiles and transforming your automation workflows into flexible, efficient processes tailored to complex project needs.
+
+---
+
+## 1. Matrix Builds: Scale Your Automation
+
+Matrix builds let you run tasks automatically across multiple variable combinations—such as platforms, configurations, or environment settings—without manually duplicating tasks.
+
+### How to Use Matrix Builds
+
+- Define a `matrix` variable with multiple values.
+- Use iteration variables inside your task commands and environment.
+
+Example:
+
+```yaml
+version: '3'
+
+vars:
+  PLATFORM: [linux, darwin, windows]
+
+tasks:
+  build:
+    cmds:
+      - echo "Building for platform {{.PLATFORM}}"
+    matrix:
+      PLATFORM: [linux, darwin, windows]
+```
+
+This creates three isolated build executions, one per platform, ensuring consistency and eliminating manual task duplication.
+
+### Benefits
+- Run cross-platform or multi-environment builds seamlessly.
+- Avoid copy-pasting; maintain one source of truth.
+- Combine with platform filters for fine-grained control.
+
+---
+
+## 2. Platform Filters: Targeted Task Execution
+
+Control which tasks run on which OS or architecture using platform filters.
+
+### Usage
+Add `platforms` or `platform` attributes to tasks:
+
+```yaml
+tasks:
+  build-linux:
+    cmds:
+      - echo "Build on Linux"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+```
+
+Task will only run this task when executed on matching platforms.
+
+### Tips
+- Combine with matrix builds to generate platform-specific variations.
+- Define multiple platforms if your build supports several.
+
+---
+
+## 3. Dynamic Variables: Inject Context and Flexibility
+
+Dynamic variables are evaluated at runtime to reflect current system state, file information, or external data. Common dynamic variables include timestamps, checksums, or shell command outputs.
+
+### Example Using Timestamp and Checksum
+
+```yaml
+version: '3'
+tasks:
+  print-checksum:
+    sources:
+      - ./source.txt
+    status:
+      - echo "Checksum: {{.CHECKSUM}}"
+
+  print-timestamp:
+    method: timestamp
+    sources:
+      - ./source.txt
+    status:
+      - echo "Timestamp Unix: {{.TIMESTAMP.Unix}}"
+      - echo "Timestamp: {{.TIMESTAMP}}"
+```
+
+This example automatically computes source file fingerprints to support incremental builds (detailed in Fingerprinting documentation).
+
+### Use Cases
+- Trigger tasks only if source files change.
+- Insert current times, commit hashes, or other real-time data into commands.
+
+---
+
+## 4. Environment Inheritance & Dynamic Scoping
+
+Tasks inherit the environment from the shell session but can also override or augment environment variables locally.
+
+### Layered Environment
+1. Global environment variables (e.g., from `.env` files or shell environment).
+2. Task-specific environment variables defined inside the Taskfile.
+3. Variables passed explicitly on the CLI or via matrix expansion.
+
+Example:
+
+```yaml
+tasks:
+  deploy:
+    env:
+      NODE_ENV: production
+      API_URL: "https://api.example.com"
+    cmds:
+      - echo "Deploying with NODE_ENV={{.NODE_ENV}} to {{.API_URL}}"
+```
+
+### Best Practices
+- Use `.env` files for common environment settings.
+- Override key variables per task for specialized behavior.
+- Combine with dynamic variables to build environments on the fly.
+
+---
+
+## 5. Fingerprinting Methods to Optimize Task Runs
+
+Task supports two powerful fingerprinting methods to detect changes and decide whether to run a task:
+
+### Checksum Method
+- Calculates and caches file hash checksums.
+- Triggers task execution when source file content changes.
+
+### Timestamp Method
+- Compares file modification times between sources and generated files.
+- Runs task if source files are newer than generated outputs.
+
+### Practical Application
+Define in your Taskfile with the `method` key:
+
+```yaml
+version: '3'
+tasks:
+  build:
+    method: checksum
+    sources:
+      - ./source.txt
+    status:
+      - echo "Checksum: {{.CHECKSUM}}"
+```
+
+This ensures the task only runs if the content of `source.txt` has changed.
+
+---
+
+## 6. Combining Features for Powerful Automation
+
+Imagine you want to build cross-platform binaries but only rebuild when sources have changed, all while injecting version info dynamically.
+
+```yaml
+version: '3'
+
+vars:
+  PLATFORM: [linux, darwin]
+  VERSION: "{{.VERSION}}"  # Inject from CLI or environment
+
+tasks:
+  build:
+    cmds:
+      - echo "Building for {{.PLATFORM}} version {{.VERSION}}"
+      - go build -o bin/{{.PLATFORM}}/app
+    matrix:
+      PLATFORM: [linux, darwin]
+    method: checksum
+    sources:
+      - ./main.go
+    generates:
+      - bin/{{.PLATFORM}}/app
+    platforms:
+      - linux/amd64
+      - darwin/amd64
+```
+
+This setup:
+- Runs build jobs for Linux and Darwin platforms.
+- Uses checksum fingerprinting to avoid redundant builds.
+- Injects a runtime version variable.
+- Restricts execution to supported platforms.
+
+---
+
+## 7. Troubleshooting & Tips
+
+<AccordionGroup title="Common Questions & Issues when Leveraging Advanced Features">
+<Accordion title="How to debug matrix variable expansions?">
+Use `task --list` or `task --dry` to see how variables expand without running tasks. This helps verify your combinations.
+</Accordion>
+
+<Accordion title="Tasks are running even though sources haven't changed. Why?">
+Check if your fingerprinting method is correctly set (e.g., `checksum` or `timestamp`) and that generated files are correctly declared in `generates` to establish expected outputs.
+</Accordion>
+
+<Accordion title="Why is a platform-filtered task being skipped?">
+Ensure your execution environment matches the platform constraints defined. Cross-check OS and CPU architecture using `task --debug`.
+</Accordion>
+
+<Accordion title="How to pass dynamic variables from outside?">
+You can pass variables at the CLI:
+```bash
+task build VERSION=1.2.3
+```
+Or source environment variables into Task.
+</Accordion>
+</AccordionGroup>
+
+---
+
+## 8. Further Learning & Resources
+- [Fingerprinting & Up-to-Date Checks](https://example.com/taskfile_concepts/advanced_features/fingerprinting_up_to_date) — Deep dive into fingerprinting methods and how Task tracks file changes.
+- [Platform Constraints and Multi-Platform Builds](https://example.com/taskfile_concepts/integration_scalability/platform_support) — Explore platform filters, OS/architecture constraints, and multi-platform automation.
+- [Using Variables & Templating](https://example.com/guides/advanced-features-best-practices/variables-and-templating) — Master the variable system, dynamic variables, and templating techniques.
+- [Including and Sharing Taskfiles](https://example.com/guides/advanced-features-best-practices/including-sharing-taskfiles) — Modularize your automation with includes.
+
+By weaving these features together, you elevate your automation, reducing manual repeat work while boosting robustness and flexibility.
+
+---
+
+_For more on how Task executes tasks using fingerprinting and status commands, see the [Fingerprinting & Up-to-Date Checks](https://example.com/taskfile_concepts/advanced_features/fingerprinting_up_to_date) guide._
