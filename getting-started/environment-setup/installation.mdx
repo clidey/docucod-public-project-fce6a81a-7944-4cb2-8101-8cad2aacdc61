@@ -1,0 +1,311 @@
+---
+title: "Installation (All Platforms)"
+description: "Follow detailed instructions for installing Task on Windows, macOS, and Linux. Explore available distribution channels such as package managers and direct downloads, and verify your installation with a quick command."
+---
+
+# Installation (All Platforms)
+
+Welcome to the comprehensive installation guide for Task, the modern task runner designed to simplify automation across all major operating systems. This document walks you through step-by-step instructions to install Task on Windows, macOS, and Linux using official and community-supported package managers, direct downloads, and build-from-source options. Finally, we'll guide you through verifying your installation to ensure it's ready for your automation workflows.
+
+---
+
+## 1. Installation Methods Overview
+
+Task offers multiple installation pathways tailored to your environment and preferences. Select the method that fits your OS and use case best.
+
+- **Official Package Managers:** Maintained by the Task team to ensure timely updates.
+- **Community-Maintained Package Managers:** Popular but community-supported options.
+- **Direct Binaries and Install Scripts:** Quick setup via binary downloads or shell scripts.
+- **Build From Source:** For advanced users wanting the latest cutting-edge build.
+
+
+## 2. Installing Task on Linux
+
+### 2.1 Using Official Package Managers
+
+These instructions use your distribution’s native tooling to install Task.
+
+#### dnf (Fedora, CentOS, Red Hat)
+
+Set up the Cloudsmith repository to get Task packages:
+
+```shell
+curl -1sLf 'https://dl.cloudsmith.io/public/task/task/setup.rpm.sh' | sudo -E bash
+```
+
+Install Task:
+
+```shell
+dnf install task
+```
+
+#### apt (Ubuntu, Debian, Linux Mint)
+
+Configure the repository:
+
+```shell
+curl -1sLf 'https://dl.cloudsmith.io/public/task/task/setup.deb.sh' | sudo -E bash
+```
+
+Install Task:
+
+```shell
+apt install task
+```
+
+#### Arch Linux (pacman)
+
+Task is available in the official Arch repositories:
+
+```shell
+pacman -S go-task
+```
+
+#### Other Community Options
+
+- **NixOS:**
+
+  ```shell
+  nix-env -iA nixpkgs.go-task
+  ```
+
+- **FreeBSD Ports:**
+
+  ```shell
+  pkg install task
+  ```
+
+- **pacstall:**
+
+  ```shell
+  pacstall -I go-task-deb
+  ```
+
+### 2.2 Using Snap (Linux)
+
+Ensure your distribution supports classic confinement for snaps:
+
+```shell
+sudo snap install task --classic
+```
+
+### 2.3 Installing Using the Official Install Script
+
+This is an easy, script-driven installer optimized for CI/CD usage.
+
+Run the installer to place Task in the current directory’s `./bin` folder:
+
+```shell
+sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+```
+
+To install to a custom directory, for example your user-local bin folder:
+
+```shell
+sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
+```
+
+Specify a particular version by adding its tag after directory arguments:
+
+```shell
+sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin v3.42.1
+```
+
+> **Warning:** macOS and Windows do not add `~/.local/bin` or `~/bin` to your system PATH by default. You may need to update your shell profile to include these.
+
+### 2.4 Installing From Binary Releases
+
+Download precompiled binaries from the [official GitHub releases](https://github.com/go-task/task/releases).
+
+After downloading, move the binary to a directory in your `$PATH`.
+
+Verify integrity by comparing against the `task_checksums.txt` file.
+
+
+## 3. Installing Task on macOS
+
+### 3.1 Using Homebrew (Recommended)
+
+To install from Task’s official Homebrew tap:
+
+```shell
+brew install go-task/tap/go-task
+```
+
+Alternatively, install from the official Homebrew repository:
+
+```shell
+brew install go-task
+```
+
+### 3.2 Using MacPorts
+
+If you use MacPorts, install Task with:
+
+```shell
+port install go-task
+```
+
+### 3.3 Using the Official Install Script
+
+Same as Linux, run:
+
+```shell
+sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+```
+
+Specify custom paths or versions as described in the Linux section.
+
+### 3.4 Download Binary Directly
+
+Download the macOS binary from the [GitHub releases page](https://github.com/go-task/task/releases), place it in `/usr/local/bin` or another `$PATH` directory.
+
+
+## 4. Installing Task on Windows
+
+### 4.1 Using WinGet (Windows Package Manager)
+
+Run the following to install Task from the community repository:
+
+```shell
+winget install Task.Task
+```
+
+### 4.2 Using Chocolatey
+
+If you use Chocolatey, install Task with:
+
+```shell
+choco install go-task
+```
+
+### 4.3 Using Scoop
+
+If you use Scoop:
+
+```shell
+scoop install task
+```
+
+### 4.4 Using the Official Install Script (WSL or Git Bash)
+
+Run the Linux/macOS install script in a compatible shell with the same parameters:
+
+```shell
+sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+```
+
+### 4.5 Download Binary Directly
+
+Download the Windows executable from the [GitHub releases](https://github.com/go-task/task/releases) and add it to your system path.
+
+
+## 5. Verifying Your Installation
+
+After installation, verify Task is properly installed and accessible.
+
+### Step 1: Check installed version
+
+Open your terminal or command prompt and run:
+
+```shell
+task --version
+```
+
+Expected output:
+
+```plaintext
+Task vX.Y.Z
+```
+
+Where `vX.Y.Z` reflects the installed version.
+
+### Step 2: Confirm command accessibility
+
+Try running the help command:
+
+```shell
+task --help
+```
+
+This displays usage instructions and confirms the CLI is responsive.
+
+### Step 3: Run a test task
+
+Create a simple `Taskfile.yml` in your current directory with the following content:
+
+```yaml
+version: '3'
+
+tasks:
+  hello:
+    cmds:
+      - echo "Task is successfully installed and running!"
+```
+
+Run the task:
+
+```shell
+task hello
+```
+
+Expected output:
+
+```plaintext
+Task is successfully installed and running!
+```
+
+
+## 6. Troubleshooting Installation Issues
+
+### Problem: `task` command not found
+
+- Verify the binary or package installed Task in a directory included in your PATH environment variable.
+- On Linux/macOS, run `echo $PATH` and confirm the install directory is listed.
+- On Windows, check System Properties &gt; Environment Variables &gt; Path.
+- Add the binary path if missing and restart your shell or terminal.
+
+### Problem: Permission denied during install
+
+- For package manager installation, ensure you have administrative or sudo privileges.
+- When running install scripts, prefer using `sudo` if permission errors occur.
+
+### Problem: Incorrect version displayed
+
+- The system may have an older Task binary earlier in the PATH.
+- Use `which task` (Linux/macOS) or `where task` (Windows) to locate installed copies.
+- Remove or rename outdated binaries.
+
+### Problem: Package manager installs outdated Task
+
+- Some Linux distro repositories lag behind the latest versions.
+- Use the official install script or binaries for the newest features.
+
+### Additional Help
+
+- Visit the [FAQ and Troubleshooting](https://taskfile.dev/faq/getting-started-issues/install-troubleshooting) page for detailed guidance.
+- Join the community on [Discord](https://discord.gg/6TY36E39UK) for live support.
+
+
+## 7. Next Steps
+
+- Explore the [Getting Started Guide](/getting-started/first-steps/project-setup) to create your first automation task.
+- Learn about [Taskfile configuration and syntax](/getting-started/configuration-troubleshooting/configuration-basics) to harness Task’s full power.
+- Customize your installation with [shell completions](/getting-started/environment-setup/installation#setup-completions) for your favorite shell.
+
+---
+
+For detailed configuration of Taskfiles and advanced usage, see our [Guide](https://taskfile.dev/usage/) and [Configuration Reference](/reference/config/).
+
+---
+
+Happy task running!
+
+
+---
+
+# Summary
+
+This guide describes how to install Task on all supported platforms with clear, step-by-step instructions. It covers official package managers, binary installation, the official install script, and how to verify your setup. Troubleshooting tips help resolve common errors encountered during installation.
+
+---
